@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f3d3e">
+<title>DocClaro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f2ee; --card:#ffffff; --ink:#1b1f23; --muted:#5d6670; --line:#e3dfd8;
+  --brand:#0f3d3e; --brand-ink:#ffffff; --accent:#1f7a6d; --soft:#e7f1ef;
+  --warn:#9a5b00; --warn-bg:#fff4e0; --danger:#a1271d; --danger-bg:#fdecea;
+  --ok:#1f6b3a; --ok-bg:#e8f5ec; --shadow:0 1px 2px rgba(0,0,0,.05),0 4px 16px rgba(0,0,0,.05);
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#111416; --card:#1a1f22; --ink:#e8eaeb; --muted:#9aa3aa; --line:#2b3236;
+    --brand:#1f7a6d; --brand-ink:#fff; --accent:#5cc2b0; --soft:#16302d;
+    --warn:#f0b35a; --warn-bg:#2e2413; --danger:#f08a7f; --danger-bg:#331a18;
+    --ok:#7fd39b; --ok-bg:#15291c; --shadow:none;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;-webkit-font-smoothing:antialiased;padding-bottom:env(safe-area-inset-bottom)}
+button,input,textarea{font:inherit;color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 48px}
+header.top{background:var(--brand);color:var(--brand-ink);padding:calc(14px + env(safe-area-inset-top)) 16px 14px}
+header.top .in{max-width:760px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;font-size:19px;letter-spacing:-.01em}
+.logo svg{flex:none}
+.iconbtn{background:transparent;border:0;color:inherit;padding:8px;border-radius:10px;cursor:pointer;display:grid;place-items:center}
+.iconbtn:hover{background:rgba(255,255,255,.12)}
+h1,h2,h3{margin:0}
+.hero{padding:22px 0 8px}
+.hero h1{font-family:"Source Serif 4",Georgia,serif;font-size:26px;line-height:1.2;letter-spacing:-.01em}
+.hero p{color:var(--muted);margin:6px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow);padding:18px;margin-top:14px}
+.pickers{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pick{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:112px;border:1.5px dashed var(--line);border-radius:12px;background:transparent;cursor:pointer;padding:14px;text-align:center;font-weight:600}
+.pick:hover,.pick:focus-visible{border-color:var(--accent);background:var(--soft);outline:none}
+.pick small{font-weight:400;color:var(--muted);font-size:13px}
+.pick svg{color:var(--accent)}
+.thumbs{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.thumb{position:relative;width:84px;height:108px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:var(--soft);display:grid;place-items:center;font-size:12px;color:var(--muted);text-align:center}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .n{position:absolute;left:6px;top:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;border-radius:6px;padding:1px 6px}
+.thumb .x{position:absolute;right:4px;top:4px;width:24px;height:24px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;cursor:pointer;line-height:1}
+.thumb .pdf{padding:8px;word-break:break-all}
+label.lbl{display:block;font-weight:600;font-size:14px;margin:16px 0 6px}
+textarea,input[type=text],input[type=url],input[type=password]{width:100%;border:1px solid var(--line);background:var(--bg);border-radius:10px;padding:10px 12px;resize:vertical}
+textarea:focus,input:focus{outline:2px solid var(--accent);outline-offset:0;border-color:transparent}
+.hint{font-size:13px;color:var(--muted);margin-top:6px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:0;border-radius:12px;padding:13px 18px;font-weight:600;cursor:pointer;background:var(--brand);color:var(--brand-ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.block{width:100%;margin-top:16px}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn.small{padding:8px 12px;font-size:14px;border-radius:10px}
+.legal{font-size:12.5px;color:var(--muted);margin-top:14px;line-height:1.45}
+.status{display:flex;align-items:center;gap:12px;padding:16px}
+.spin{width:22px;height:22px;border-radius:50%;border:3px solid var(--soft);border-top-color:var(--accent);animation:sp 1s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.err{background:var(--danger-bg);color:var(--danger);border-color:transparent}
+.hidden{display:none!important}
+
+/* resultado */
+.res-head{display:flex;flex-direction:column;gap:10px}
+.res-head h2{font-family:"Source Serif 4",Georgia,serif;font-size:22px;line-height:1.25}
+.meta-line{color:var(--muted);font-size:14px}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font-size:12.5px;font-weight:600;border-radius:999px;padding:3px 10px;background:var(--soft);color:var(--accent)}
+.chip.u-alta{background:var(--danger-bg);color:var(--danger)}
+.chip.u-media{background:var(--warn-bg);color:var(--warn)}
+.chip.u-baixa{background:var(--ok-bg);color:var(--ok)}
+.banner{border-radius:12px;padding:12px 14px;margin-top:14px;display:flex;gap:10px;align-items:flex-start;font-size:15px}
+.banner.pro{background:var(--warn-bg);color:var(--warn)}
+.banner.low{background:var(--danger-bg);color:var(--danger)}
+.banner b{display:block}
+.sec{margin-top:14px}
+.sec h3{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:700;margin-bottom:10px}
+.sec p{margin:0}
+ul.clean{margin:0;padding-left:20px}
+ul.clean li+li{margin-top:6px}
+ol.steps{margin:0;padding-left:20px}
+ol.steps li+li{margin-top:6px}
+.deadline{border:1px solid var(--line);border-left:4px solid var(--danger);border-radius:10px;padding:12px 14px}
+.deadline+.deadline{margin-top:10px}
+.deadline .t{font-weight:600}
+.deadline .p{font-size:18px;font-weight:700;margin:2px 0}
+.deadline .c{font-size:14px;color:var(--muted)}
+.vals{width:100%;border-collapse:collapse}
+.vals td{padding:8px 0;border-bottom:1px solid var(--line);vertical-align:top}
+.vals td:last-child{text-align:right;font-weight:700;white-space:nowrap;padding-left:12px}
+.vals tr:last-child td{border-bottom:0}
+.opt{border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.opt+.opt{margin-top:10px}
+.opt .o{font-weight:600}
+.opt .q{font-size:14.5px;margin-top:4px}
+.opt .k{font-size:14px;color:var(--warn);margin-top:4px}
+.letter{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:14px;white-space:pre-wrap;font-size:15px;line-height:1.55}
+.letter-meta{font-size:14px;color:var(--muted);margin-bottom:8px}
+.row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.tech{font-size:12px;color:var(--muted);margin-top:18px;text-align:center}
+dialog{border:0;border-radius:16px;padding:0;max-width:480px;width:calc(100% - 32px);background:var(--card);color:var(--ink)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog .in{padding:20px}
+dialog h2{font-size:18px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none}
+.toast.on{opacity:1}
+@media (max-width:420px){.hero h1{font-size:23px}.pick{min-height:100px}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="in">
+    <div class="logo">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 2h8l5 5v13a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z" stroke="currentColor" stroke-width="1.8"/><path d="M14 2v5h5" stroke="currentColor" stroke-width="1.8"/><path d="M8 14.5l2.5 2.5L16 11.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      DocClaro
+    </div>
+    <button class="iconbtn" id="btnCfg" aria-label="Definições">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main class="wrap">
+  <!-- ENTRADA -->
+  <section id="vIn">
+    <div class="hero">
+      <h1>Recebeu uma carta e não percebe o que querem?</h1>
+      <p>Fotografe ou carregue o documento. Explicamos em linguagem simples e sugerimos uma resposta.</p>
+    </div>
+
+    <div class="card">
+      <div class="pickers">
+        <button class="pick" id="btnCam" type="button">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M3 8a2 2 0 0 1 2-2h2l1.5-2h7L17 6h2a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Fotografar
+          <small>uma página de cada vez</small>
+        </button>
+        <button class="pick" id="btnFile" type="button">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M12 16V4m0 0l-4 4m4-4l4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+          Carregar ficheiro
+          <small>PDF ou imagem</small>
+        </button>
+      </div>
+      <input type="file" id="inCam" accept="image/*" capture="environment" hidden>
+      <input type="file" id="inFile" accept="application/pdf,image/*" multiple hidden>
+
+      <div class="thumbs" id="thumbs"></div>
+      <p class="hint" id="pageHint">Até 5 páginas. Fotografe com boa luz, o documento inteiro e direito.</p>
+
+      <label class="lbl" for="nota">Contexto (opcional)</label>
+      <textarea id="nota" rows="2" maxlength="1000" placeholder="Ex.: recebi isto ontem por carta registada; já paguei parte em março."></textarea>
+
+      <button class="btn block" id="btnGo" disabled>Analisar documento</button>
+
+      <p class="legal">O DocClaro explica documentos de forma informativa. Não é aconselhamento jurídico nem substitui um advogado, solicitador ou contabilista. Confirme sempre prazos e valores no documento original. Os ficheiros são enviados para análise e não ficam guardados.</p>
+    </div>
+  </section>
+
+  <!-- A ANALISAR -->
+  <section id="vWait" class="hidden">
+    <div class="card status"><div class="spin"></div><div><b>A ler o documento…</b><div class="hint" id="waitHint">Pode demorar até 30 segundos.</div></div></div>
+  </section>
+
+  <!-- ERRO -->
+  <section id="vErr" class="hidden">
+    <div class="card err"><b>Não foi possível analisar.</b><div id="errMsg" style="margin-top:4px"></div></div>
+    <div class="row"><button class="btn ghost" id="btnBack1">Voltar</button><button class="btn" id="btnRetry">Tentar de novo</button></div>
+  </section>
+
+  <!-- RESULTADO -->
+  <section id="vRes" class="hidden"></section>
+</main>
+
+<dialog id="dlgCfg">
+  <form method="dialog" class="in">
+    <h2>Ligação ao servidor</h2>
+    <p class="hint">Só para testes. Fica guardado apenas neste dispositivo.</p>
+    <label class="lbl" for="cfgUrl">Endereço do Worker</label>
+    <input type="url" id="cfgUrl" placeholder="https://xxxx.workers.dev">
+    <label class="lbl" for="cfgTok">Token da app</label>
+    <input type="password" id="cfgTok" autocomplete="off">
+    <div class="row" style="justify-content:flex-end;margin-top:18px">
+      <button class="btn ghost small" value="cancel">Cancelar</button>
+      <button class="btn small" id="cfgSave" value="ok">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const DEFAULT_URL = "https://crimson-math-7bdf.dontasko-geral.workers.dev";
+  const MAX_FILES = 5;
+  const MAX_TOTAL_B64 = 14 * 1024 * 1024;
+  const IMG_MAX_SIDE = 2000;
+  const IMG_QUALITY = 0.82;
+
+  const $ = (id) => document.getElementById(id);
+  const store = {
+    get(k){ try { return localStorage.getItem(k); } catch { return null; } },
+    set(k,v){ try { localStorage.setItem(k,v); } catch {} }
+  };
+  const cfg = () => ({ url: (store.get("dc_url") || DEFAULT_URL).replace(/\/+$/,""), token: store.get("dc_token") || "" });
+
+  let files = []; // {mimeType, data, preview, name}
+  let lastResult = null;
+
+  // ---------- util ----------
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  const has = (s) => s && !/^\s*(não consta|n\/a|-)\s*$/i.test(String(s));
+  function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("on"); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("on"),2200); }
+  function show(v){ for (const id of ["vIn","vWait","vErr","vRes"]) $(id).classList.toggle("hidden", id!==v); window.scrollTo({top:0,behavior:"smooth"}); }
+
+  function readAsDataURL(file){ return new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(file); }); }
+
+  async function compressImage(file){
+    const url = URL.createObjectURL(file);
+    try {
+      const img = await new Promise((res,rej)=>{ const i=new Image(); i.onload=()=>res(i); i.onerror=rej; i.src=url; });
+      const scale = Math.min(1, IMG_MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+      const w = Math.round(img.naturalWidth*scale), h = Math.round(img.naturalHeight*scale);
+      const c = document.createElement("canvas"); c.width=w; c.height=h;
+      const ctx = c.getContext("2d"); ctx.fillStyle="#fff"; ctx.fillRect(0,0,w,h); ctx.drawImage(img,0,0,w,h);
+      const dataUrl = c.toDataURL("image/jpeg", IMG_QUALITY);
+      return { mimeType:"image/jpeg", data:dataUrl.split(",")[1], preview:dataUrl, name:file.name };
+    } finally { URL.revokeObjectURL(url); }
+  }
+
+  async function addFiles(list){
+    for (const f of list){
+      if (files.length >= MAX_FILES){ toast(`Máximo de ${MAX_FILES} páginas.`); break; }
+      try {
+        if (f.type === "application/pdf"){
+          const d = await readAsDataURL(f);
+          files.push({ mimeType:"application/pdf", data:d.split(",")[1], preview:null, name:f.name });
+        } else if (/^image\/(heic|heif)$/i.test(f.type)){
+          const d = await readAsDataURL(f);
+          files.push({ mimeType:f.type.toLowerCase(), data:d.split(",")[1], preview:null, name:f.name });
+        } else if (f.type.startsWith("image/")){
+          files.push(await compressImage(f));
+        } else { toast("Formato não suportado: " + f.name); }
+      } catch { toast("Não consegui ler " + f.name); }
+    }
+    const total = files.reduce((s,f)=>s+f.data.length,0);
+    if (total > MAX_TOTAL_B64){ files.pop(); toast("Ficheiros demasiado grandes (máx. ~10 MB)."); }
+    renderThumbs();
+  }
+
+  function renderThumbs(){
+    const box = $("thumbs"); box.innerHTML = "";
+    files.forEach((f,i)=>{
+      const d = document.createElement("div"); d.className="thumb";
+      d.innerHTML = (f.preview ? `<img src="${f.preview}" alt="Página ${i+1}">` : `<div class="pdf">📄<br>${esc(f.name)}</div>`)
+        + `<span class="n">${i+1}</span><button class="x" aria-label="Remover página ${i+1}">×</button>`;
+      d.querySelector(".x").onclick = () => { files.splice(i,1); renderThumbs(); };
+      box.appendChild(d);
+    });
+    $("btnGo").disabled = files.length === 0;
+    $("pageHint").textContent = files.length
+      ? `${files.length} de ${MAX_FILES} páginas. Pode juntar mais páginas do mesmo documento.`
+      : "Até 5 páginas. Fotografe com boa luz, o documento inteiro e direito.";
+    $("btnCam").querySelector("small").textContent = files.length ? "adicionar outra página" : "uma página de cada vez";
+  }
+
+  // ---------- análise ----------
+  async function analyze(){
+    const { url, token } = cfg();
+    if (!token){ openCfg(); toast("Falta o token da app."); return; }
+    show("vWait");
+    const slow = setTimeout(()=>{ $("waitHint").textContent = "Documento longo, ainda a trabalhar…"; }, 20000);
+    try {
+      const r = await fetch(url + "/analyze", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "X-App-Token":token },
+        body: JSON.stringify({ files: files.map(f=>({mimeType:f.mimeType, data:f.data})), nota: $("nota").value.trim() })
+      });
+      const j = await r.json().catch(()=>null);
+      if (!r.ok || !j || !j.analise) throw new Error((j && j.erro) || `Erro ${r.status}`);
+      lastResult = j;
+      renderResult(j);
+      show("vRes");
+    } catch (e){
+      $("errMsg").textContent = e.message === "Failed to fetch"
+        ? "Sem ligação ao servidor. Verifique a internet ou o endereço nas definições."
+        : e.message;
+      show("vErr");
+    } finally { clearTimeout(slow); $("waitHint").textContent = "Pode demorar até 30 segundos."; }
+  }
+
+  const CAT = { financas:"Finanças", seguranca_social:"Segurança Social", multa_contraordenacao:"Multa / contraordenação", tribunal:"Tribunal", contrato:"Contrato", trabalho:"Trabalho", habitacao:"Habitação", banco_credito:"Banco / crédito", seguros:"Seguros", consumo:"Consumo", saude:"Saúde", outro:"Outro" };
+  const URG = { alta:"Urgência alta", media:"Urgência média", baixa:"Urgência baixa" };
+
+  function list(arr, cls="clean"){ return `<ul class="${cls}">${arr.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`; }
+  function sec(title, inner){ return `<div class="card sec"><h3>${title}</h3>${inner}</div>`; }
+
+  function renderResult({ analise:a, meta }){
+    const out = [];
+    const sub = [a.entidade_emissora, has(a.data_documento) ? a.data_documento : null].filter(has).map(esc).join(" · ");
+    out.push(`<div class="card"><div class="res-head">
+      <div class="chips"><span class="chip">${esc(CAT[a.categoria] || a.categoria)}</span>${a.urgencia?`<span class="chip u-${esc(a.urgencia)}">${URG[a.urgencia]||""}</span>`:""}</div>
+      <h2>${esc(a.tipo_documento)}</h2>
+      ${sub?`<div class="meta-line">${sub}</div>`:""}
+      <p>${esc(a.resumo)}</p></div>
+      ${a.confianca==="baixa"?`<div class="banner low"><span>⚠️</span><div><b>Leitura pouco fiável</b>A imagem pode estar desfocada, cortada ou incompleta. Confirme tudo no original ou tire nova foto.</div></div>`:""}
+      ${a.recomenda_profissional?`<div class="banner pro"><span>⚖️</span><div><b>Recomendamos falar com um profissional</b>${esc(a.motivo_profissional)}</div></div>`:""}
+    </div>`);
+
+    if (a.prazos?.length) out.push(sec("Prazos", a.prazos.map(p=>`<div class="deadline">
+      <div class="t">${esc(p.descricao)}</div>
+      <div class="p">${esc(p.prazo_tal_como_consta)}</div>
+      ${has(p.data_limite)?`<div class="c">Data: ${esc(p.data_limite)}</div>`:""}
+      ${has(p.consequencia)?`<div class="c">Se não cumprir: ${esc(p.consequencia)}</div>`:""}
+    </div>`).join("")));
+
+    out.push(sec("O que isto quer dizer", `<p>${esc(a.explicacao_simples)}</p>`));
+
+    if (a.valores?.length) out.push(sec("Valores", `<table class="vals">${a.valores.map(v=>`<tr><td>${esc(v.descricao)}</td><td>${esc(v.montante)}</td></tr>`).join("")}</table>`));
+    if (a.pontos_importantes?.length) out.push(sec("Pontos importantes", list(a.pontos_importantes)));
+    if (a.opcoes?.length) out.push(sec("As suas opções", a.opcoes.map(o=>`<div class="opt"><div class="o">${esc(o.opcao)}</div>${has(o.quando_faz_sentido)?`<div class="q">${esc(o.quando_faz_sentido)}</div>`:""}${has(o.cuidado)?`<div class="k">Cuidado: ${esc(o.cuidado)}</div>`:""}</div>`).join("")));
+    if (a.proximos_passos?.length) out.push(sec("Próximos passos", `<ol class="steps">${a.proximos_passos.map(x=>`<li>${esc(x)}</li>`).join("")}</ol>`));
+
+    const rs = a.resposta_sugerida;
+    if (rs?.necessaria && rs.corpo){
+      out.push(sec("Resposta sugerida", `
+        <div class="letter-meta">${has(rs.canal)?`Enviar por: <b>${esc(rs.canal)}</b><br>`:""}${has(rs.assunto)?`Assunto: <b>${esc(rs.assunto)}</b>`:""}</div>
+        <div class="letter" id="letter">${esc(rs.corpo)}</div>
+        <p class="hint">Substitua o que está entre [parênteses retos] pelos seus dados antes de enviar.</p>
+        <div class="row">
+          <button class="btn small" id="btnCopy">Copiar texto</button>
+          <button class="btn ghost small" id="btnMail">Abrir no e-mail</button>
+          <button class="btn ghost small" id="btnShare">Partilhar</button>
+        </div>`));
+    } else if (rs) {
+      out.push(sec("Resposta", `<p>Não parece ser necessário responder por escrito a este documento.</p>`));
+    }
+
+    if (a.legislacao_referida?.length) out.push(sec("Legislação citada no documento", list(a.legislacao_referida)));
+    if (a.avisos?.length) out.push(sec("Avisos", list(a.avisos)));
+
+    out.push(`<div class="row" style="margin-top:16px"><button class="btn ghost" id="btnNew">Analisar outro documento</button></div>
+      <p class="legal">Informação gerada automaticamente a partir do documento. Pode conter erros. Não é aconselhamento jurídico. Confirme prazos e valores no original e, em caso de dúvida, consulte um profissional.</p>
+      ${meta?`<div class="tech">${esc(meta.modelo)} · ${meta.tokens_entrada ?? "?"} + ${meta.tokens_saida ?? "?"} tokens · ${((meta.ms||0)/1000).toFixed(1)} s</div>`:""}`);
+
+    $("vRes").innerHTML = out.join("");
+
+    $("btnNew").onclick = reset;
+    if ($("btnCopy")){
+      const full = () => (has(rs.assunto) ? `Assunto: ${rs.assunto}\n\n` : "") + rs.corpo;
+      $("btnCopy").onclick = async () => { try { await navigator.clipboard.writeText(full()); toast("Texto copiado."); } catch { toast("Não foi possível copiar."); } };
+      $("btnMail").onclick = () => { location.href = `mailto:?subject=${encodeURIComponent(rs.assunto||"")}&body=${encodeURIComponent(rs.corpo)}`; };
+      const sh = $("btnShare");
+      if (navigator.share) sh.onclick = () => navigator.share({ title: rs.assunto || "Resposta", text: full() }).catch(()=>{});
+      else sh.remove();
+    }
+  }
+
+  function reset(){ files=[]; lastResult=null; $("nota").value=""; renderThumbs(); show("vIn"); }
+
+  // ---------- definições ----------
+  function openCfg(){ const c=cfg(); $("cfgUrl").value=c.url; $("cfgTok").value=c.token; $("dlgCfg").showModal(); }
+  $("cfgSave").onclick = () => { store.set("dc_url", $("cfgUrl").value.trim() || DEFAULT_URL); store.set("dc_token", $("cfgTok").value.trim()); toast("Guardado."); };
+  $("btnCfg").onclick = openCfg;
+
+  // ---------- eventos ----------
+  $("btnCam").onclick = () => $("inCam").click();
+  $("btnFile").onclick = () => $("inFile").click();
+  $("inCam").onchange = (e) => { addFiles([...e.target.files]); e.target.value=""; };
+  $("inFile").onchange = (e) => { addFiles([...e.target.files]); e.target.value=""; };
+  $("btnGo").onclick = analyze;
+  $("btnRetry").onclick = analyze;
+  $("btnBack1").onclick = () => show("vIn");
+
+  // token pelo URL uma vez (#t=...), depois limpa o endereço
+  const m = location.hash.match(/t=([^&]+)/);
+  if (m){ store.set("dc_token", decodeURIComponent(m[1])); history.replaceState(null,"",location.pathname+location.search); toast("Token guardado."); }
+
+  // modo demonstração para ver o layout sem servidor: ?demo=1
+  if (new URLSearchParams(location.search).get("demo") === "1"){
+    renderResult({ analise:{
+      tipo_documento:"Notificação para pagamento de coima", categoria:"multa_contraordenacao", entidade_emissora:"Autoridade Nacional de Segurança Rodoviária", destinatario:"[Nome]", data_documento:"14 de outubro de 2026",
+      resumo:"É uma notificação de contraordenação por excesso de velocidade. Pedem o pagamento da coima ou a apresentação de defesa.",
+      explicacao_simples:"Foi registado um excesso de velocidade com o seu veículo. Pode pagar o valor mínimo da coima dentro do prazo ou, se discordar, apresentar defesa por escrito.",
+      pontos_importantes:["A matrícula indicada deve ser confirmada.","O pagamento voluntário não impede a sanção acessória, se existir."],
+      prazos:[{descricao:"Pagar ou apresentar defesa", prazo_tal_como_consta:"15 dias úteis a contar da notificação", data_limite:"depende da data de receção", consequencia:"não indicado no documento"}],
+      valores:[{descricao:"Coima mínima", montante:"120,00 €"}],
+      opcoes:[{opcao:"Pagar o valor mínimo", quando_faz_sentido:"Se reconhece a infração.", cuidado:"Pagar é aceitar a infração."},{opcao:"Apresentar defesa", quando_faz_sentido:"Se não era o condutor ou os dados estão errados.", cuidado:"Tem de ser dentro do prazo."}],
+      proximos_passos:["Confirme a matrícula e a data.","Decida se paga ou apresenta defesa.","Guarde comprovativo."],
+      legislacao_referida:["Código da Estrada, art.º 27.º"], urgencia:"media", recomenda_profissional:false, motivo_profissional:"",
+      resposta_sugerida:{necessaria:true, canal:"carta registada com aviso de receção", assunto:"Defesa — Auto n.º [NÚMERO]", corpo:"Exmos. Senhores,\n\n[NOME], NIF [NIF], residente em [MORADA], vem apresentar defesa relativamente ao auto n.º [NÚMERO]...\n\nCom os melhores cumprimentos,\n[NOME]"},
+      confianca:"alta", avisos:["Demonstração com dados fictícios."]
+    }, meta:{modelo:"demo", tokens_entrada:0, tokens_saida:0, ms:0} });
+    show("vRes");
+  }
+})();
+</script>
+</body>
+</html>

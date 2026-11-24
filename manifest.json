@@ -1,0 +1,11 @@
+{
+  "name": "DívidaClara",
+  "short_name": "DívidaClara",
+  "description": "Compreender. Organizar. Resolver.",
+  "lang": "pt-PT",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#FFFFFF",
+  "theme_color": "#102B46",
+  "icons": [{ "src": "assets/logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

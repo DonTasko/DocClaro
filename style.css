@@ -228,3 +228,25 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 @media (max-width:760px){.three{grid-template-columns:1fr}}
 .row-actions{display:flex;gap:.4rem;flex-wrap:wrap}
 .btn-sm{min-height:40px;padding:.45rem .8rem;font-size:.9rem}
+
+/* Fase 4 — dívidas, gráficos, simulador */
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap;margin-bottom:.8rem}
+.panel-head h2{margin:0}
+.hbar{display:flex;flex-direction:column;gap:2px}
+.hb-row{display:grid;grid-template-columns:minmax(90px,34%) 1fr auto;align-items:center;gap:.7rem;padding:.35rem .2rem;border-radius:6px}
+.hb-row:hover,.hb-row:focus{background:var(--grey-50);outline:none}
+.hb-label{font-size:.88rem;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hb-track{height:14px}
+.hb-bar{height:14px;border-radius:0 4px 4px 0}
+.hb-val{font-size:.85rem;color:#3a4a5c;font-variant-numeric:tabular-nums;white-space:nowrap}
+.line-chart{width:100%;height:auto;display:block}
+.ln-pt{cursor:default}
+.chart-table{margin-top:.6rem;font-size:.88rem}
+.chart-table summary{cursor:pointer;color:var(--blue);font-size:.85rem}
+.chart-tip{position:fixed;z-index:90;background:var(--navy);color:#fff;font-size:.82rem;padding:.35rem .6rem;border-radius:6px;pointer-events:none;white-space:nowrap}
+.sim-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:0 16px}
+#f-sim h3{margin:1.2rem 0 .5rem;font-size:1rem}
+.sim-table td,.sim-table th{white-space:nowrap}
+.sim-table tbody th{text-transform:none;letter-spacing:0;font-size:.92rem;color:var(--ink);font-weight:500;white-space:normal}
+.neg-txt{color:var(--urg)}
+.modal-box{max-width:560px}

@@ -145,6 +145,21 @@
       return { debts: must(debts), ie: must(ie), docsAnalysed: docs.error ? 0 : (docs.count || 0) };
     },
 
+    /* ---------- dívidas e orçamento (Fase 4) ---------- */
+    async debts() { return must(await sb.from('dc_debts').select('*').order('created_at', { ascending: true })); },
+    async saveDebt(d) {
+      const row = { creditor: d.creditor, debt_type: d.debt_type, initial_amount: d.initial_amount, capital: d.capital, interest: d.interest, charges: d.charges,
+        monthly_payment: d.monthly_payment, start_date: d.start_date || null, due_date: d.due_date || null, status: d.status,
+        court_case: !!d.court_case, seizure: !!d.seizure, notes: d.notes || null };
+      if (d.id) return must(await sb.from('dc_debts').update(row).eq('id', d.id).select('id').single());
+      return must(await sb.from('dc_debts').insert(row).select('id').single());
+    },
+    async deleteDebt(id) { must(await sb.from('dc_debts').delete().eq('id', id)); },
+    async debtHistory() { return must(await sb.from('dc_debt_history').select('month,total,monthly_payments').order('month').limit(36)); },
+    async documentsForDebt(id) { return must(await sb.from('dc_documents').select('id,name,uploaded_at,analysis_status').eq('debt_id', id).order('uploaded_at', { ascending: false })); },
+    async budget() { return must(await sb.from('dc_income_expenses').select('kind,category,monthly_value')); },
+    async saveBudget(items) { must(await sb.rpc('dc_save_budget', { p_items: items })); },
+
     /* ---------- documentos e análise IA (Fase 3) ---------- */
     async debtsLite() { return must(await sb.from('dc_debts').select('id,creditor').order('creditor')); },
     async uploadDocument(file, debtId) {

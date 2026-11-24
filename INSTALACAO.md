@@ -7,7 +7,14 @@ Versão antiga do DocClaro: ramo `docclaro-antigo`.
 - Fase 1 ✅ Identidade, página inicial, navegação, área de cliente, modo demonstração.
 - Fase 2 ✅ Supabase: registo, login, recuperação e alteração de palavra-passe, perfil, consentimentos (RGPD e IA), histórico de atividade, exportação de dados, eliminação de conta, dashboard ligado à base de dados.
 - Fase 3 ✅ Análise de documentos: fotografia ou PDF → Storage privado → Edge Function `dc-analyse` → Gemini (saída JSON estruturada) → relatório A–L com prioridade. Consentimento IA obrigatório, limite por plano, rede de segurança no servidor que força "urgente" em matéria judicial.
-- Fases 4–7 por fazer (gestão de dívidas e simulador, insolvência/empresas/biblioteca, pagamentos/admin, segurança e publicação).
+- Fase 4 ✅ Gestão de dívidas (criar, editar, apagar; processo judicial e penhora; documentos associados), gráficos (por credor, por tipo, prestações, evolução mensal, vencidas) e simulador financeiro com 3 cenários. Orçamento guardado em dc_income_expenses via RPC dc_save_budget; histórico mensal automático em dc_debt_history.
+- Fases 5–7 por fazer (insolvência/empresas/biblioteca, pagamentos/admin, segurança e publicação).
+
+## Regras do simulador
+- Essenciais (nunca reduzidos): renda, alimentação, água, eletricidade, gás, saúde, despesas familiares.
+- Reduzíveis: telecomunicações, transportes, outras despesas.
+- Margem de segurança: 5 % do rendimento, mínimo 50 €.
+- Máximo prudente de prestações = rendimento − essenciais − reduzíveis (após redução) − margem. Valores acima disto são assinalados como perigosos e nunca sugeridos.
 
 ## IA (Fase 3)
 - Código: supabase/functions/dc-analyse/index.ts (publicada no projeto MasterTable, verify_jwt off porque valida o utilizador por dentro).

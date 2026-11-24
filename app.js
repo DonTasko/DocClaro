@@ -19,6 +19,7 @@
       if (isNaN(x)) return '—';
       return String(x.getDate()).padStart(2, '0') + '/' + String(x.getMonth() + 1).padStart(2, '0') + '/' + x.getFullYear();
     },
+    monthLabel(m) { const x = new Date(m + (String(m).length === 10 ? 'T00:00:00' : '')); return ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'][x.getMonth()] + '/' + String(x.getFullYear()).slice(2); },
     fmtDateTime(d) { const x = new Date(d); return util.fmtDate(x) + ' ' + String(x.getHours()).padStart(2, '0') + ':' + String(x.getMinutes()).padStart(2, '0'); },
     daysFromToday(d) { const a = new Date(); a.setHours(0, 0, 0, 0); const b = new Date(d); b.setHours(0, 0, 0, 0); return Math.round((b - a) / 864e5); },
     esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); },
@@ -68,9 +69,13 @@
       ],
       ie: [
         { kind: 'rendimento', category: 'Salário líquido', monthly_value: 1180 }, { kind: 'rendimento', category: 'Outros rendimentos', monthly_value: 120 },
-        { kind: 'despesa', category: 'Renda', monthly_value: 450 }, { kind: 'despesa', category: 'Alimentação', monthly_value: 260 },
-        { kind: 'despesa', category: 'Água, luz e gás', monthly_value: 95 }, { kind: 'despesa', category: 'Telecomunicações', monthly_value: 38 },
-        { kind: 'despesa', category: 'Transportes', monthly_value: 70 }
+        { kind: 'despesa', category: 'Renda da casa', monthly_value: 450 }, { kind: 'despesa', category: 'Alimentação', monthly_value: 260 },
+        { kind: 'despesa', category: 'Água', monthly_value: 25 }, { kind: 'despesa', category: 'Eletricidade', monthly_value: 50 }, { kind: 'despesa', category: 'Gás', monthly_value: 20 },
+        { kind: 'despesa', category: 'Telecomunicações', monthly_value: 38 }, { kind: 'despesa', category: 'Transportes', monthly_value: 70 }
+      ],
+      history: [
+        { month: d(-150).slice(0, 8) + '01', total: 19840 }, { month: d(-120).slice(0, 8) + '01', total: 19610 }, { month: d(-90).slice(0, 8) + '01', total: 19470 },
+        { month: d(-60).slice(0, 8) + '01', total: 19220 }, { month: d(-30).slice(0, 8) + '01', total: 19050 }, { month: d(0).slice(0, 8) + '01', total: 18901.95 }
       ],
       docsAnalysed: 1
     };
@@ -325,6 +330,121 @@
     return new File([blob], (file.name || 'fotografia').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
   }
 
+  /* ---------------- gráficos SVG (uma série, cor da marca, tooltip + tabela) ---------------- */
+  const PRESTACOES = 'Prestações de crédito';
+  const BUDGET = [
+    ['rendimento', 'Salário líquido'], ['rendimento', 'Outros rendimentos'],
+    ['despesa', 'Renda da casa', 'essencial'], ['despesa', 'Alimentação', 'essencial'], ['despesa', 'Água', 'essencial'],
+    ['despesa', 'Eletricidade', 'essencial'], ['despesa', 'Gás', 'essencial'], ['despesa', 'Saúde', 'essencial'],
+    ['despesa', 'Despesas familiares', 'essencial'], ['despesa', 'Telecomunicações', 'reduzivel'],
+    ['despesa', 'Transportes', 'reduzivel'], ['despesa', 'Outras despesas', 'reduzivel']
+  ];
+  const slug = s => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  let lastDebts = [];
+
+  const charts = {
+    color: '#176B9D',
+    table(rows, fmt, h1 = 'Item', h2 = 'Valor') {
+      return `<details class="chart-table"><summary>Ver como tabela</summary><table><thead><tr><th>${h1}</th><th class="num">${h2}</th></tr></thead><tbody>${rows.map(r => `<tr><td>${util.esc(r.label)}</td><td class="num">${fmt(r.value)}</td></tr>`).join('')}</tbody></table></details>`;
+    },
+    hbar(rows, fmt, empty = 'Sem dados.', keepOrder = false) {
+      if (!rows.length) return `<p class="empty">${empty}</p>`;
+      if (!keepOrder) rows = [...rows].sort((a, b) => b.value - a.value);
+      const max = Math.max(...rows.map(r => Math.abs(r.value))) || 1;
+      const bars = rows.map(r => `<div class="hb-row" data-tip="${util.esc(r.label)}: ${util.esc(fmt(r.value))}" tabindex="0">
+          <div class="hb-label">${util.esc(r.label)}</div>
+          <div class="hb-track"><div class="hb-bar" style="width:${Math.max(1.5, Math.abs(r.value) / max * 100)}%;background:${r.value < 0 ? '#B42318' : charts.color}"></div></div>
+          <div class="hb-val">${fmt(r.value)}</div></div>`).join('');
+      return `<div class="hbar" role="img" aria-label="${util.esc(rows.map(r => r.label + ' ' + fmt(r.value)).join('; '))}">${bars}</div>` + charts.table(rows, fmt);
+    },
+    line(pts, fmt) {
+      const W = 560, H = 200, L = 28, R = 28, T = 14, B = 26;
+      const max = Math.max(...pts.map(p => p.value)) * 1.1 || 1;
+      const x = i => L + (pts.length === 1 ? (W - L - R) / 2 : i * (W - L - R) / (pts.length - 1));
+      const y = v => T + (H - T - B) * (1 - v / max);
+      const path = pts.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.value).toFixed(1)).join(' ');
+      const grid = [0.25, 0.5, 0.75, 1].map(f => `<line x1="${L}" x2="${W - R}" y1="${y(max * f / 1.1)}" y2="${y(max * f / 1.1)}" stroke="#EDF1F5"/>`).join('');
+      const dots = pts.map((p, i) => `<g class="ln-pt" data-tip="${util.esc(p.label)}: ${util.esc(fmt(p.value))}" tabindex="0"><circle cx="${x(i)}" cy="${y(p.value)}" r="14" fill="transparent"/><circle cx="${x(i)}" cy="${y(p.value)}" r="4.5" fill="${charts.color}" stroke="#fff" stroke-width="2"/></g>`).join('');
+      const labels = pts.map((p, i) => (pts.length <= 8 || i % Math.ceil(pts.length / 8) === 0) ? `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="11" fill="#6B7A8C">${util.esc(p.label)}</text>` : '').join('');
+      return `<svg viewBox="0 0 ${W} ${H}" class="line-chart" role="img" aria-label="Evolução: ${util.esc(pts.map(p => p.label + ' ' + fmt(p.value)).join('; '))}">${grid}<line x1="${L}" x2="${W - R}" y1="${H - B}" y2="${H - B}" stroke="#DDE3EA"/><path d="${path}" fill="none" stroke="${charts.color}" stroke-width="2" stroke-linejoin="round"/>${dots}${labels}</svg>` + charts.table(pts, fmt, 'Mês', 'Total');
+    }
+  };
+  // tooltip partilhado
+  (function () {
+    const tip = document.createElement('div'); tip.className = 'chart-tip'; tip.hidden = true; document.body.appendChild(tip);
+    const show = (el, x, y) => { tip.textContent = el.dataset.tip; tip.hidden = false; tip.style.left = Math.min(x + 12, innerWidth - tip.offsetWidth - 8) + 'px'; tip.style.top = (y - 36) + 'px'; };
+    document.addEventListener('mousemove', e => { const el = e.target.closest('[data-tip]'); if (el) show(el, e.clientX, e.clientY); else tip.hidden = true; });
+    document.addEventListener('focusin', e => { const el = e.target.closest && e.target.closest('[data-tip]'); if (el) { const r = el.getBoundingClientRect(); show(el, r.left, r.top); } });
+    document.addEventListener('focusout', () => { tip.hidden = true; });
+  })();
+
+  /* ---------------- simulador: cálculos ---------------- */
+  const sim = {
+    num(s) { const n = parseFloat(String(s || '').replace(/\s|€/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.')); return Number.isFinite(n) && n > 0 ? n : 0; },
+    read() {
+      const v = { income: 0, essential: 0, reducible: 0, financial: 0, items: [] };
+      document.querySelectorAll('#f-sim input[data-cat]').forEach(i => {
+        const n = sim.num(i.value); v.items.push({ kind: i.dataset.kind, category: i.dataset.cat, value: n });
+        if (i.dataset.kind === 'rendimento') v.income += n;
+        else if (i.dataset.cls === 'financeira') v.financial += n;
+        else if (i.dataset.cls === 'reduzivel') v.reducible += n;
+        else v.essential += n;
+      });
+      v.red = Math.min(80, Math.max(0, sim.num($('#sim-red').value)));
+      v.target = sim.num($('#sim-new').value);
+      return v;
+    },
+    // Margem de segurança: nunca se sugere usar o último euro.
+    margin: inc => Math.max(50, inc * 0.05),
+    scenario(name, income, essential, reducible, financial) {
+      const balance = income - essential - reducible - financial;
+      const effort = income ? financial / income * 100 : 0;
+      const capacity = Math.max(0, balance - sim.margin(income));
+      return { name, income, essential, reducible, financial, balance, effort, capacity };
+    },
+    compute(v) {
+      const s1 = sim.scenario('Situação atual', v.income, v.essential, v.reducible, v.financial);
+      const reduced = v.reducible * (1 - v.red / 100);
+      const s2 = sim.scenario('Redução de despesas', v.income, v.essential, reduced, v.financial);
+      // Teto seguro para prestações: o que sobra depois do essencial, das restantes despesas e da margem.
+      const safeMax = Math.max(0, v.income - v.essential - reduced - sim.margin(v.income));
+      const proposed = v.target > 0 ? v.target : Math.min(v.financial, safeMax);
+      const s3 = sim.scenario('Reorganização de pagamentos', v.income, v.essential, reduced, proposed);
+      return { s: [s1, s2, s3], safeMax, proposed, overTarget: v.target > safeMax, reduced };
+    },
+    render(v) {
+      if (!v.income) return `<section class="panel"><p class="empty">Indica pelo menos um rendimento para ver os resultados.</p></section>`;
+      const r = sim.compute(v), [a, b, c] = r.s;
+      const pct = n => util.num.format(n) + ' %';
+      const row = (label, f, cls = '') => `<tr class="${cls}"><th>${label}</th>${r.s.map(s => `<td class="num">${f(s)}</td>`).join('')}</tr>`;
+      const warn = [];
+      if (a.balance < 0) warn.push(`<div class="alert urg">Neste momento gastas mais ${util.fmtEUR(-a.balance)} do que recebes por mês. Mantém o essencial (casa, alimentação, saúde, energia) pago primeiro e fala com os credores antes de falhares prestações.</div>`);
+      if (r.overTarget) warn.push(`<div class="alert urg">A prestação de ${util.fmtEUR(v.target)} que indicaste põe em causa despesas essenciais. O valor máximo prudente com estes números é ${util.fmtEUR(r.safeMax)} por mês.</div>`);
+      if (v.essential === 0) warn.push(`<div class="alert warn">Não indicaste despesas essenciais. Sem elas, os resultados parecem melhores do que a realidade.</div>`);
+      return `${warn.join('')}
+        <section class="panel"><h2>Resultados</h2>
+          <div class="table-scroll"><table class="sim-table"><thead><tr><th></th>${r.s.map(s => `<th class="num">${s.name}</th>`).join('')}</tr></thead><tbody>
+            ${row('Rendimento mensal total', s => util.fmtEUR(s.income))}
+            ${row('Despesas essenciais', s => util.fmtEUR(s.essential))}
+            ${row('Outras despesas', s => util.fmtEUR(s.reducible))}
+            ${row('Encargos financeiros', s => util.fmtEUR(s.financial))}
+            ${row('Saldo disponível', s => `<strong class="${s.balance < 0 ? 'neg-txt' : ''}">${util.fmtEUR(s.balance)}</strong>`)}
+            ${row('Taxa de esforço', s => `<span class="${s.effort > 35 ? 'neg-txt' : ''}">${pct(s.effort)}</span>`)}
+            ${row('Capacidade estimada para pagamentos adicionais', s => util.fmtEUR(s.capacity))}
+          </tbody></table></div>
+          <p class="fine">Taxa de esforço = encargos financeiros ÷ rendimento. A capacidade adicional já desconta uma margem de segurança de ${util.fmtEUR(sim.margin(v.income))} (5 % do rendimento, mínimo 50 €).</p>
+        </section>
+        <div class="two">
+          <section class="panel"><h2>Saldo disponível por cenário</h2>${charts.hbar(r.s.map(s => ({ label: s.name, value: s.balance })), util.fmtEUR, '', true)}<p class="fine">A vermelho: saldo negativo (gastas mais do que recebes).</p></section>
+          <section class="panel"><h2>Como ler os cenários</h2>
+            <p><strong>Redução de despesas:</strong> corta ${pct(v.red)} só nas despesas reduzíveis (telecomunicações, transportes, outras). Poupa ${util.fmtEUR(v.reducible - r.reduced)} por mês. As despesas essenciais não são tocadas.</p>
+            <p><strong>Reorganização de pagamentos:</strong> ${v.target ? `usa a prestação total que indicaste, ${util.fmtEUR(v.target)}.` : `usa ${util.fmtEUR(r.proposed)}, o menor valor entre as prestações atuais e o máximo prudente (${util.fmtEUR(r.safeMax)}).`} ${r.overTarget ? `<strong class="neg-txt">Este valor é demasiado alto para o teu orçamento.</strong> Não proponhas mais de ${util.fmtEUR(r.safeMax)} por mês.` : 'É o valor de referência para propores aos credores um plano que consigas cumprir.'}</p>
+            <p class="fine">Simulação informativa. Não considera juros futuros nem garante aceitação dos credores.</p>
+          </section>
+        </div>`;
+    }
+  };
+
   const views = {
     async inicio() {
       const u = api.currentUser();
@@ -334,7 +454,7 @@
       const creditors = new Set(active.map(x => x.creditor.trim().toLowerCase())).size;
       const monthly = active.reduce((s, x) => s + Number(x.monthly_payment), 0);
       const inc = d.ie.filter(x => x.kind === 'rendimento').reduce((s, x) => s + Number(x.monthly_value), 0);
-      const exp = d.ie.filter(x => x.kind === 'despesa').reduce((s, x) => s + Number(x.monthly_value), 0);
+      const exp = d.ie.filter(x => x.kind === 'despesa' && x.category !== 'Prestações de crédito').reduce((s, x) => s + Number(x.monthly_value), 0);
       const bal = inc - exp - monthly;
       const effort = inc ? monthly / inc * 100 : 0;
       const overdue = active.filter(x => x.due_date && util.daysFromToday(x.due_date) < 0);
@@ -362,11 +482,29 @@
         ${api.isDemo() ? '<p class="fine">Valores fictícios de demonstração. Os cálculos são os mesmos que se aplicam aos teus dados.</p>' : ''}`;
     },
     async dividas() {
-      const d = await getData();
-      const rows = d.debts.map(x => `<tr><td>${util.esc(x.creditor)}</td><td>${util.esc(x.debt_type)}</td><td class="num">${util.fmtEUR(x.capital)}</td><td class="num">${util.fmtEUR(Number(x.interest) + Number(x.charges || 0))}</td><td class="num">${util.fmtEUR(x.monthly_payment)}</td><td>${util.fmtDate(x.due_date)}</td><td>${badgeStatus(x.status)}</td></tr>`).join('');
-      return `<section class="panel"><h2>Dívidas registadas</h2>
-        ${d.debts.length ? `<div class="table-scroll"><table><thead><tr><th>Credor</th><th>Tipo</th><th class="num">Capital</th><th class="num">Juros e encargos</th><th class="num">Prestação</th><th>Vencimento</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="empty">Ainda não há dívidas registadas.</p>'}
-        </section>` + phaseCard(4, ['Adicionar, editar e apagar dívidas (credor, capital, juros, encargos, prestação, datas, processo judicial, penhora)', 'Associar documentos a cada dívida', 'Gráficos: dívida total, por credor, evolução, prestações, vencidas, por tipo de crédito'], 'Os dados ficam guardados no servidor e só tu os vês.');
+      const demoMode = api.isDemo();
+      const [debts, hist] = demoMode ? [demo.debts.map((x, i) => ({ ...x, id: 'demo' + i })), demo.history] : await Promise.all([api.debts(), api.debtHistory()]);
+      lastDebts = debts;
+      const active = debts.filter(x => x.status !== 'Liquidada');
+      const sum = (a, k) => a.reduce((s, x) => s + Number(x[k] || 0), 0);
+      const overdue = active.filter(x => x.due_date && util.daysFromToday(x.due_date) < 0 || x.status === 'Em atraso');
+      const group = (key, val) => { const m = new Map(); active.forEach(x => m.set(x[key], (m.get(x[key]) || 0) + Number(x[val] || 0))); return [...m].map(([label, value]) => ({ label, value })).filter(r => r.value > 0); };
+      const kpis = `<div class="kpis">${kpi('Dívida total', util.fmtEUR(sum(active, 'total')))}${kpi('Credores', new Set(active.map(x => x.creditor.trim().toLowerCase())).size)}${kpi('Prestações mensais', util.fmtEUR(sum(active, 'monthly_payment')))}${kpi('Dívidas vencidas', overdue.length + ' · ' + util.fmtEUR(sum(overdue, 'total')), overdue.length > 0)}</div>`;
+      const rows = debts.map(x => `<tr><td>${util.esc(x.creditor)}${x.court_case ? ' <span class="badge badge-urg">Processo</span>' : ''}${x.seizure ? ' <span class="badge badge-urg">Penhora</span>' : ''}</td><td>${util.esc(x.debt_type)}</td><td class="num">${util.fmtEUR(x.total)}</td><td class="num">${util.fmtEUR(x.monthly_payment)}</td><td>${util.fmtDate(x.due_date)}</td><td>${badgeStatus(x.status)}</td>
+        <td>${demoMode ? '' : `<div class="row-actions"><button class="btn btn-ghost btn-sm" data-action="edit-debt" data-id="${x.id}">Editar</button><button class="btn btn-ghost btn-sm" data-action="delete-debt" data-id="${x.id}">Apagar</button></div>`}</td></tr>`).join('');
+      const histPts = hist.map(h => ({ label: util.monthLabel(h.month), value: Number(h.total) }));
+      return `${kpis}
+        <section class="panel"><div class="panel-head"><h2>Dívidas registadas</h2>${demoMode ? '' : '<button class="btn btn-primary" data-action="new-debt">+ Adicionar dívida</button>'}</div>
+          ${debts.length ? `<div class="table-scroll"><table><thead><tr><th>Credor</th><th>Tipo</th><th class="num">Total</th><th class="num">Prestação</th><th>Vencimento</th><th>Estado</th><th></th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="empty">Ainda não há dívidas registadas. Começa por adicionar a primeira.</p>'}
+        </section>
+        ${active.length ? `<div class="two">
+          <section class="panel"><h2>Dívida por credor</h2>${charts.hbar(group('creditor', 'total'), util.fmtEUR)}</section>
+          <section class="panel"><h2>Distribuição por tipo de crédito</h2>${charts.hbar(group('debt_type', 'total'), util.fmtEUR)}</section>
+          <section class="panel"><h2>Prestações mensais por credor</h2>${charts.hbar(group('creditor', 'monthly_payment'), util.fmtEUR, 'Sem prestações definidas.')}</section>
+          <section class="panel"><h2>Evolução do endividamento</h2>${histPts.length > 1 ? charts.line(histPts, util.fmtEUR) : '<p class="empty">O gráfico aparece a partir do segundo mês com registos. Cada mês guarda automaticamente o total em dívida.</p>' + (histPts.length ? charts.table(histPts, util.fmtEUR, 'Mês', 'Total') : '')}</section>
+        </div>
+        <section class="panel"><h2>Dívidas vencidas</h2>${overdue.length ? `<table><thead><tr><th>Credor</th><th>Vencimento</th><th class="num">Total</th></tr></thead><tbody>${overdue.map(x => `<tr><td>${util.esc(x.creditor)}</td><td>${util.fmtDate(x.due_date)}</td><td class="num">${util.fmtEUR(x.total)}</td></tr>`).join('')}</tbody></table>
+          <p class="fine">Em dívidas vencidas, contactar o credor cedo costuma abrir mais opções de acordo. Se houver carta de tribunal ou agente de execução, fala já com advogado ou solicitador.</p>` : '<p class="empty">Nenhuma dívida vencida.</p>'}</section>` : ''}`;
     },
     async analisar() {
       if (api.isDemo()) {
@@ -406,7 +544,31 @@
           </tbody></table></div>` : '<p class="empty">Ainda não analisaste nenhum documento.</p>'}
         </section>`;
     },
-    simulador: () => phaseCard(4, ['Rendimentos: salário líquido e outros', 'Despesas: renda, alimentação, água, luz, gás, telecomunicações, transportes, saúde, família, prestações, outras', 'Cálculo de rendimento total, despesas essenciais, encargos financeiros, saldo, taxa de esforço e capacidade de pagamento', 'Três cenários: atual, redução de despesas e reorganização de pagamentos', 'Gráficos e tabelas'], 'O simulador nunca sugere pagamentos que deixem as despesas essenciais por cobrir.'),
+    async simulador() {
+      const demoMode = api.isDemo();
+      const [saved, debts] = demoMode ? [demo.ie, demo.debts] : await Promise.all([api.budget(), api.debts()]);
+      const val = cat => { const r = saved.find(x => x.category === cat); return r ? Number(r.monthly_value) : ''; };
+      const debtPay = debts.filter(x => x.status !== 'Liquidada').reduce((s, x) => s + Number(x.monthly_payment || 0), 0);
+      const savedPay = val(PRESTACOES);
+      const field = ([kind, cat, cls]) => `<div class="field sim-f"><label for="sim-${slug(cat)}">${cat}${cls === 'reduzivel' ? ' <span class="fine">(reduzível)</span>' : ''}</label>
+        <input id="sim-${slug(cat)}" data-kind="${kind}" data-cat="${util.esc(cat)}" data-cls="${cls || ''}" inputmode="decimal" placeholder="0,00" value="${val(cat) === '' ? '' : String(val(cat)).replace('.', ',')}"></div>`;
+      return `<section class="panel"><h2>Os teus valores mensais</h2>
+          <p>Preenche o que souberes. Valores em euros por mês. Os cálculos atualizam à medida que escreves.</p>
+          <form id="f-sim" novalidate>
+            <h3>Rendimentos</h3><div class="sim-grid">${BUDGET.filter(b => b[0] === 'rendimento').map(field).join('')}</div>
+            <h3>Despesas</h3><div class="sim-grid">${BUDGET.filter(b => b[0] === 'despesa').map(field).join('')}</div>
+            <h3>Encargos financeiros</h3><div class="sim-grid">
+              ${field(['despesa', PRESTACOES, 'financeira']).replace(`value=""`, `value="${String(savedPay !== '' ? savedPay : (debtPay || '')).replace('.', ',')}"`)}
+            </div>
+            ${debtPay ? `<p class="fine">As tuas dívidas registadas somam ${util.fmtEUR(debtPay)} de prestações por mês.</p>` : ''}
+            <h3>Cenários</h3><div class="sim-grid">
+              <div class="field sim-f"><label for="sim-red">Redução nas despesas reduzíveis (%)</label><input id="sim-red" inputmode="numeric" value="15"></div>
+              <div class="field sim-f"><label for="sim-new">Prestação total que queres propor aos credores (€/mês)</label><input id="sim-new" inputmode="decimal" placeholder="automático"></div>
+            </div>
+            ${demoMode ? '' : '<button class="btn btn-primary" type="submit">Guardar os meus valores</button>'}
+          </form></section>
+        <div id="sim-out"></div>`;
+    },
     insolvencia: () => phaseCard(5, ['O que é a insolvência de pessoa singular e quando pode ser ponderada', 'Consequências, exoneração do passivo restante e plano de pagamentos', 'Responsabilidades do devedor e documentação habitual', 'Diferença entre insolvência e processo executivo', 'Questionário de organização com relatório preliminar'], 'Conteúdo a redigir a partir do texto em vigor do CIRE no Diário da República, com data de atualização. A decisão de avançar deve ser sempre acompanhada por profissional habilitado.'),
     apoio: () => phaseCard(5, ['Pedido de contacto com advogado, solicitador, contabilista certificado ou entidade de apoio ao sobre-endividamento', 'Autorização expressa e revogável para partilhar documentos com o profissional escolhido', 'Distinção clara entre informação automática e serviço prestado por profissional'], 'Os dados nunca são vendidos. Parcerias remuneradas, se existirem, serão identificadas.'),
     biblioteca: () => phaseCard(5, ['Insolvência e recuperação (CIRE), processo executivo e penhoras, prescrição, crédito ao consumo e à habitação, sobre-endividamento, proteção de rendimentos, negociação com credores', 'Cada artigo com fontes oficiais (Diário da República, Banco de Portugal, Portal das Finanças, Segurança Social, DGPJ) e data da última verificação'], 'Nenhuma norma é publicada sem confirmação da versão em vigor.'),
@@ -444,6 +606,18 @@
   };
 
   const bindView = {
+    simulador() {
+      const f = $('#f-sim'); if (!f) return;
+      const update = () => { $('#sim-out').innerHTML = sim.render(sim.read()); };
+      f.addEventListener('input', update); update();
+      f.addEventListener('submit', async ev => {
+        ev.preventDefault(); if (api.isDemo()) return; const btn = $('button[type=submit]', f);
+        const v = sim.read();
+        ui.busy(btn, true, 'A guardar…');
+        try { await api.saveBudget(v.items.filter(i => i.value > 0)); ui.toast('Valores guardados. O dashboard já os usa.', 'ok'); }
+        catch (e) { ui.error(e); } finally { ui.busy(btn, false); }
+      });
+    },
     async analisar() {
       const f = $('#f-doc'); if (!f) return;
       try { lastAnalyses = await api.analyses(); } catch (e) { lastAnalyses = []; }
@@ -546,7 +720,68 @@
   }
 
   /* ---------------- ações ---------------- */
+  const DEBT_TYPES = ['Crédito pessoal', 'Crédito à habitação', 'Crédito automóvel', 'Cartão de crédito', 'Descoberto bancário', 'Crédito consolidado', 'Finanças (AT)', 'Segurança Social', 'Fornecedores', 'Telecomunicações', 'Água, luz ou gás', 'Rendas em atraso', 'Empréstimo particular', 'Outro'];
+  const DEBT_STATUS = ['Em pagamento', 'Em atraso', 'Em cobrança', 'Em negociação', 'Contestada', 'Liquidada'];
+  async function debtForm(d = {}) {
+    const n = v => v == null || v === '' ? '' : String(v).replace('.', ',');
+    const opt = (list, cur) => list.map(o => `<option ${o === cur ? 'selected' : ''}>${util.esc(o)}</option>`).join('');
+    ui.openModal(`<h2 id="modal-title">${d.id ? 'Editar dívida' : 'Nova dívida'}</h2>
+      <form id="f-debt" class="form" novalidate>
+        <div class="field"><label for="d-cred">Credor</label><input id="d-cred" name="creditor" maxlength="120" required value="${util.esc(d.creditor || '')}" placeholder="Ex.: nome do banco ou da empresa"></div>
+        <div class="field"><label for="d-type">Tipo de dívida</label><select id="d-type" name="debt_type">${opt(DEBT_TYPES, d.debt_type || 'Crédito pessoal')}</select></div>
+        <div class="sim-grid">
+          <div class="field"><label for="d-ini">Valor inicial</label><input id="d-ini" name="initial_amount" inputmode="decimal" value="${n(d.initial_amount)}"></div>
+          <div class="field"><label for="d-cap">Capital em dívida</label><input id="d-cap" name="capital" inputmode="decimal" value="${n(d.capital)}" required></div>
+          <div class="field"><label for="d-int">Juros</label><input id="d-int" name="interest" inputmode="decimal" value="${n(d.interest)}"></div>
+          <div class="field"><label for="d-chg">Encargos e despesas</label><input id="d-chg" name="charges" inputmode="decimal" value="${n(d.charges)}"></div>
+          <div class="field"><label for="d-mon">Prestação mensal</label><input id="d-mon" name="monthly_payment" inputmode="decimal" value="${n(d.monthly_payment)}"></div>
+          <div class="field"><label for="d-st">Estado</label><select id="d-st" name="status">${opt(DEBT_STATUS, d.status || 'Em pagamento')}</select></div>
+          <div class="field"><label for="d-start">Data de início</label><input id="d-start" name="start_date" type="date" value="${d.start_date || ''}"></div>
+          <div class="field"><label for="d-due">Data de vencimento</label><input id="d-due" name="due_date" type="date" value="${d.due_date || ''}"></div>
+        </div>
+        <label class="check"><input type="checkbox" name="court_case" ${d.court_case ? 'checked' : ''}><span>Existe processo judicial</span></label>
+        <label class="check"><input type="checkbox" name="seizure" ${d.seizure ? 'checked' : ''}><span>Existe penhora</span></label>
+        <div class="field"><label for="d-notes">Observações</label><textarea id="d-notes" name="notes" rows="3" maxlength="2000">${util.esc(d.notes || '')}</textarea></div>
+        <div id="d-docs"></div>
+        <button class="btn btn-primary btn-block" type="submit">Guardar</button>
+      </form>`);
+    const f = $('#f-debt');
+    if (d.id) {
+      try {
+        const docs = await api.documentsForDebt(d.id);
+        $('#d-docs').innerHTML = `<div class="field"><label>Documentos associados</label>${docs.length ? `<ul>${docs.map(x => `<li>${util.esc(x.name)} · ${util.fmtDate(x.uploaded_at)}</li>`).join('')}</ul>` : '<p class="fine">Nenhum. Associa documentos em “Analisar documento”.</p>'}</div>`;
+      } catch (e) { /* opcional */ }
+    }
+    f.addEventListener('submit', async ev => {
+      ev.preventDefault(); const btn = $('button[type=submit]', f);
+      const money = el => { const raw = el.value.trim(); if (!raw) return { ok: true, v: 0 }; const v = sim.num(raw); const ok = v > 0 || /^0+([.,]0+)?$/.test(raw); ui.setFieldError(el, ok ? '' : 'Valor inválido.'); return { ok, v }; };
+      const fields = ['initial_amount', 'capital', 'interest', 'charges', 'monthly_payment'].map(k => [k, money(f[k])]);
+      const creditor = f.creditor.value.trim();
+      ui.setFieldError(f.creditor, creditor ? '' : 'Indica o credor.');
+      if (!creditor || fields.some(([, r]) => !r.ok)) return;
+      if (f.start_date.value && f.due_date.value && f.due_date.value < f.start_date.value) return ui.setFieldError(f.due_date, 'O vencimento é anterior ao início.');
+      const data = { id: d.id, creditor, debt_type: f.debt_type.value, status: f.status.value, start_date: f.start_date.value, due_date: f.due_date.value,
+        court_case: f.court_case.checked, seizure: f.seizure.checked, notes: f.notes.value.trim() };
+      fields.forEach(([k, r]) => { data[k] = r.v; });
+      if (!f.initial_amount.value.trim()) data.initial_amount = null;
+      ui.busy(btn, true, 'A guardar…');
+      try { await api.saveDebt(data); ui.closeModal(); ui.toast('Dívida guardada.', 'ok'); route(); }
+      catch (e) { ui.error(e); ui.busy(btn, false); }
+    });
+  }
+
   const actions = {
+    'new-debt'() { debtForm(); },
+    'edit-debt'(btn) { const d = lastDebts.find(x => x.id === btn.dataset.id); if (d) debtForm(d); },
+    'delete-debt'(btn) {
+      const d = lastDebts.find(x => x.id === btn.dataset.id); if (!d) return;
+      ui.openModal(`<h2 id="modal-title">Apagar dívida</h2><p>Apagar <strong>${util.esc(d.creditor)}</strong>? Os documentos associados ficam guardados, sem associação.</p>
+        <button class="btn btn-primary btn-block" style="background:var(--urg)" data-action="confirm-delete-debt" data-id="${d.id}">Apagar</button>`);
+    },
+    async 'confirm-delete-debt'(btn) {
+      ui.busy(btn, true, 'A apagar…');
+      try { await api.deleteDebt(btn.dataset.id); ui.closeModal(); ui.toast('Dívida apagada.', 'ok'); route(); } catch (e) { ui.error(e); ui.busy(btn, false); }
+    },
     'toggle-nav'(btn) { const n = $('#site-nav'); n.classList.toggle('open'); btn.setAttribute('aria-expanded', n.classList.contains('open')); },
     'toggle-sidebar'(btn) { const s = $('#sidebar'); s.classList.toggle('open'); btn.setAttribute('aria-expanded', s.classList.contains('open')); },
     'open-login'() { auth.loginForm(); },

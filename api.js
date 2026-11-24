@@ -145,6 +145,48 @@
       return { debts: must(debts), ie: must(ie), docsAnalysed: docs.error ? 0 : (docs.count || 0) };
     },
 
+    /* ---------- documentos e análise IA (Fase 3) ---------- */
+    async debtsLite() { return must(await sb.from('dc_debts').select('id,creditor').order('creditor')); },
+    async uploadDocument(file, debtId) {
+      const ext = { 'application/pdf': 'pdf', 'image/jpeg': 'jpg', 'image/png': 'png' }[file.type];
+      if (!ext) throw new ApiError('TYPE', 'Formato não suportado. Usa PDF, JPG ou PNG.');
+      if (file.size > 12 * 1024 * 1024) throw new ApiError('SIZE', 'Documento demasiado grande (máximo 12 MB).');
+      const path = `${authUser.id}/${crypto.randomUUID()}.${ext}`;
+      const bucket = sb.storage.from(cfg.BACKEND.BUCKET);
+      must(await bucket.upload(path, file, { contentType: file.type, upsert: false }));
+      const { data, error } = await sb.from('dc_documents').insert({
+        name: (file.name || ('documento.' + ext)).slice(0, 120), mime: file.type, size_bytes: file.size, storage_path: path, debt_id: debtId || null
+      }).select('id,name').single();
+      if (error) { await bucket.remove([path]); throw toApiError(error); }
+      return data;
+    },
+    async analyse(documentId) {
+      const { data } = await sb.auth.getSession();
+      const token = data.session ? data.session.access_token : '';
+      let res;
+      try {
+        res = await fetch(cfg.BACKEND.SUPABASE_URL + '/functions/v1/dc-analyse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', apikey: cfg.BACKEND.SUPABASE_KEY, Authorization: 'Bearer ' + token },
+          body: JSON.stringify({ action: 'analyse', document_id: documentId })
+        });
+      } catch (e) { throw new ApiError('NETWORK', 'Sem ligação ao servidor. Verifica a internet.'); }
+      const out = await res.json().catch(() => ({}));
+      if (!out.ok) throw new ApiError(out.code || 'AI', out.message || 'Não foi possível analisar o documento.');
+      return out.analysis;
+    },
+    async analyses() {
+      return must(await sb.from('dc_ai_analyses').select('id,created_at,priority,result,document_id,dc_documents(name)').eq('analysis_type', 'documento').order('created_at', { ascending: false }).limit(50));
+    },
+    async documents() {
+      return must(await sb.from('dc_documents').select('id,name,uploaded_at,analysis_status,delete_after,storage_path').order('uploaded_at', { ascending: false }).limit(100));
+    },
+    async deleteDocument(id) {
+      const doc = must(await sb.from('dc_documents').select('storage_path').eq('id', id).single());
+      must(await sb.storage.from(cfg.BACKEND.BUCKET).remove([doc.storage_path]));
+      must(await sb.from('dc_documents').delete().eq('id', id));
+    },
+
     /* ---------- público ---------- */
     async contact({ name, email, message }) {
       must(await sb.from('dc_contact_messages').insert({ name, email, message, consent: true }));

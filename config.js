@@ -8,7 +8,7 @@
 window.DC_CONFIG = {
   APP_NAME: 'DívidaClara',
   SLOGAN: 'Compreender. Organizar. Resolver.',
-  VERSION: '0.2.0 · Fase 2',
+  VERSION: '0.3.0 · Fase 3',
 
   BACKEND: {
     TYPE: 'supabase',

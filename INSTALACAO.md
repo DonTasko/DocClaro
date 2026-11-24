@@ -6,7 +6,16 @@ Versão antiga do DocClaro: ramo `docclaro-antigo`.
 ## Estado
 - Fase 1 ✅ Identidade, página inicial, navegação, área de cliente, modo demonstração.
 - Fase 2 ✅ Supabase: registo, login, recuperação e alteração de palavra-passe, perfil, consentimentos (RGPD e IA), histórico de atividade, exportação de dados, eliminação de conta, dashboard ligado à base de dados.
-- Fases 3–7 por fazer (Gemini, gestão de dívidas, simulador, insolvência/empresas/biblioteca, pagamentos/admin, publicação).
+- Fase 3 ✅ Análise de documentos: fotografia ou PDF → Storage privado → Edge Function `dc-analyse` → Gemini (saída JSON estruturada) → relatório A–L com prioridade. Consentimento IA obrigatório, limite por plano, rede de segurança no servidor que força "urgente" em matéria judicial.
+- Fases 4–7 por fazer (gestão de dívidas e simulador, insolvência/empresas/biblioteca, pagamentos/admin, segurança e publicação).
+
+## IA (Fase 3)
+- Código: supabase/functions/dc-analyse/index.ts (publicada no projeto MasterTable, verify_jwt off porque valida o utilizador por dentro).
+- Chave: secret `GEMINI_API_KEY` nas Edge Functions do Supabase. Nunca no frontend.
+- Modelo: dc_settings.gemini_model (vazio = gemini-3.5-flash). Trocar quando a Google anunciar desativação.
+- Limites: dc_settings.ai_limits (gratuito = total de sempre; restantes = por mês). Contagem feita em dc_logs.
+- Diagnóstico: POST {"action":"health"} à função devolve se a chave existe (sem a revelar).
+- Por fazer: eliminação automática dos documentos após doc_retention_days (agendar com pg_cron).
 
 ## Arquitetura
 | Camada | Onde |

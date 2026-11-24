@@ -256,6 +256,75 @@
     return `<span class="badge ${map[s] || 'badge-info'}">${util.esc(s)}</span>`;
   }
 
+  /* ---------------- relatório A–L ---------------- */
+  const report = {
+    labels: { informativo: 'Informativo', atencao: 'Atenção', urgente: 'Urgente' },
+    natureza: { carta_informativa: 'Carta informativa', notificacao_formal: 'Notificação formal', judicial_ou_execucao: 'Judicial ou execução', contrato: 'Contrato', fiscal_ou_seguranca_social: 'Finanças ou Segurança Social', outro: 'Outro', indeterminada: 'Não foi possível determinar' },
+    badge(p) { return `<span class="badge ${{ urgente: 'badge-urg', atencao: 'badge-warn', informativo: 'badge-info' }[p] || 'badge-info'}">${report.labels[p] || '—'}</span>`; },
+    list(a, empty = 'Nada identificado.') { return a && a.length ? `<ul>${a.map(x => `<li>${util.esc(x)}</li>`).join('')}</ul>` : `<p class="empty">${empty}</p>`; },
+    txt(s, empty = 'Não consta do documento.') { return s ? `<p>${util.esc(s)}</p>` : `<p class="empty">${empty}</p>`; },
+    sec(l, title, body) { return `<div class="rsec"><h3><span class="l">${l}</span>${title}</h3>${body}</div>`; },
+    render(r, meta) {
+      const p = r.prioridade || 'atencao';
+      const head = { urgente: '⚠️ Urgente: pode haver prazos curtos', atencao: '📌 Atenção: este documento pede uma resposta ou análise', informativo: 'ℹ️ Informativo: sem urgência aparente' }[p];
+      const v = r.valor_reclamado || {};
+      const e = r.entidade_emissora || {};
+      const ap = r.acompanhamento_profissional || {};
+      return `<article class="report">
+        <div class="report-head ${p}"><div><strong>${head}</strong>${util.esc(r.motivo_prioridade || '')}
+          ${p === 'urgente' ? '<p style="margin:.5rem 0 0"><strong>Confirma já a situação com um advogado ou solicitador.</strong> Se não tens meios para pagar, podes pedir apoio judiciário na Segurança Social.</p>' : ''}</div></div>
+        <div class="report-body">
+          ${r.legivel === false ? '<div class="alert warn" style="margin-top:.8rem">O documento não ficou totalmente legível. Tenta uma fotografia com mais luz, de frente e sem cortes.</div>' : ''}
+          ${meta ? `<p class="fine" style="margin-top:.8rem">${util.esc(meta)}</p>` : ''}
+          ${report.sec('A', 'Identificação do documento', `<p>${util.esc(r.tipo_documento || '—')} · <span class="fine">${report.natureza[r.natureza] || ''}</span></p>`)}
+          ${report.sec('B', 'Entidade emissora', `<p>${util.esc(e.nome || 'Não identificada')}${e.nif ? ' · NIF ' + util.esc(e.nif) : ''}</p>${e.contacto ? `<p class="fine">${util.esc(e.contacto)}</p>` : ''}`)}
+          ${report.sec('C', 'Destinatário', report.txt(r.destinatario))}
+          ${report.sec('D', 'Valor reclamado', `${v.montante != null ? `<p><strong>${util.fmtEUR(v.montante)}</strong></p>` : '<p class="empty">Nenhum valor identificado com segurança.</p>'}${v.texto_original ? `<p class="quote">“${util.esc(v.texto_original)}”</p>` : ''}${v.decomposicao && v.decomposicao.length ? report.list(v.decomposicao) : ''}`)}
+          ${report.sec('E', 'Origem da dívida', report.txt(r.origem_divida))}
+          ${report.sec('F', 'Datas relevantes', r.datas_relevantes && r.datas_relevantes.length ? `<ul>${r.datas_relevantes.map(d => `<li><strong>${util.esc(d.data)}</strong> — ${util.esc(d.significado)}</li>`).join('')}</ul>` : '<p class="empty">Nenhuma data identificada.</p>')}
+          ${report.sec('G', 'Prazo mencionado no documento', r.prazo && r.prazo.existe ? `${r.prazo.texto_original ? `<p class="quote">“${util.esc(r.prazo.texto_original)}”</p>` : ''}<p>${util.esc(r.prazo.explicacao || '')}</p><p class="fine">Confirma a contagem do prazo com um profissional ou com a entidade.</p>` : '<p class="empty">Não foi identificado nenhum prazo.</p>')}
+          ${report.sec('H', 'Referências legais e processuais', `<p class="fine">Só o que está expressamente escrito no documento.</p>${report.list(r.referencias_legais, 'Nenhuma norma citada.')}${r.referencias_processuais && r.referencias_processuais.length ? '<p style="margin-top:.4rem"><strong>Referências processuais</strong></p>' + report.list(r.referencias_processuais) : ''}`)}
+          ${report.sec('I', 'Explicação em linguagem simples', report.txt(r.explicacao_simples, '—') + `<div class="three"><div><h4>O que o documento diz</h4>${report.list(r.factos)}</div><div><h4>Interpretações possíveis</h4>${report.list(r.interpretacoes)}</div><div><h4>Não foi possível confirmar</h4>${report.list(r.nao_confirmado)}</div></div>`)}
+          ${report.sec('J', 'Questões que deves confirmar', report.list(r.questoes_a_confirmar))}
+          ${report.sec('K', 'Possíveis passos seguintes', report.list(r.passos_possiveis) + '<p class="fine">São possibilidades, não garantias de resultado.</p>')}
+          ${report.sec('L', 'Acompanhamento profissional', ap.necessario ? `<p><strong>Recomendado: ${util.esc(ap.quem || 'profissional habilitado')}</strong></p><p>${util.esc(ap.motivo || '')}</p><a class="btn btn-secondary btn-sm" href="#/app/apoio">Pedir apoio profissional</a>` : `<p>${util.esc(ap.motivo || 'Não parece necessário de imediato, mas podes sempre pedir ajuda.')}</p>`)}
+          <p class="fine" style="margin-top:1rem">Análise automática e informativa, feita por inteligência artificial. Pode conter erros. Não é consulta jurídica. Confirma sempre no documento original.</p>
+        </div></article>`;
+    },
+    sample: {
+      legivel: true, tipo_documento: 'Carta de cobrança (exemplo fictício)', natureza: 'notificacao_formal',
+      entidade_emissora: { nome: 'Cobranças Demonstração, Lda', nif: '', contacto: 'Linha de apoio indicada na carta' },
+      destinatario: 'Utilizador de demonstração',
+      valor_reclamado: { montante: 431.10, texto_original: 'o montante em dívida de 431,10 €', decomposicao: ['Capital: 389,90 €', 'Juros e despesas: 41,20 €'] },
+      origem_divida: 'Faturas de telecomunicações não pagas, segundo a carta.',
+      datas_relevantes: [{ data: '02/10/2026', significado: 'Data da carta' }],
+      prazo: { existe: true, texto_original: 'no prazo de 15 dias a contar da receção desta carta', explicacao: 'A empresa pede pagamento ou contacto em 15 dias a partir do dia em que recebeste a carta.' },
+      referencias_processuais: [], referencias_legais: [],
+      explicacao_simples: 'É uma carta de uma empresa de cobranças que diz que tens faturas por pagar. Ainda não é um processo em tribunal. Pede que pagues ou que entres em contacto para acordar um plano.',
+      factos: ['A empresa diz agir em nome do operador de telecomunicações', 'Valor reclamado: 431,10 €', 'Prazo de 15 dias'],
+      interpretacoes: ['Se não responderes, a empresa pode avançar com outras diligências, como uma injunção'],
+      nao_confirmado: ['Data exata em que recebeste a carta', 'Período das faturas em causa'],
+      questoes_a_confirmar: ['Reconheces estas faturas?', 'Já pagaste alguma parte?', 'Pede o detalhe das faturas e do cálculo dos juros'],
+      passos_possiveis: ['Pedir por escrito o detalhe da dívida', 'Propor um plano de pagamento que caiba no teu orçamento', 'Guardar cópia de toda a correspondência'],
+      acompanhamento_profissional: { necessario: false, quem: '', motivo: 'Para já parece possível tratar diretamente com a empresa. Se não reconheceres a dívida, pede ajuda.' },
+      prioridade: 'atencao', motivo_prioridade: 'Pede resposta ou pagamento num prazo de 15 dias.'
+    }
+  };
+  let lastAnalyses = [];
+
+  // Reduz fotografias grandes do telemóvel antes de enviar (mais rápido e dentro do limite)
+  async function shrinkImage(file) {
+    if (!/^image\//.test(file.type)) return file;
+    let bmp;
+    try { bmp = await createImageBitmap(file); } catch (e) { return file; }
+    const max = 2400, scale = Math.min(1, max / Math.max(bmp.width, bmp.height));
+    if (scale === 1 && file.size < 2.5e6 && (file.type === 'image/jpeg' || file.type === 'image/png')) return file;
+    const c = document.createElement('canvas'); c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale);
+    c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+    const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85));
+    return new File([blob], (file.name || 'fotografia').replace(/\.[^.]+$/, '') + '.jpg', { type: 'image/jpeg' });
+  }
+
   const views = {
     async inicio() {
       const u = api.currentUser();
@@ -299,7 +368,44 @@
         ${d.debts.length ? `<div class="table-scroll"><table><thead><tr><th>Credor</th><th>Tipo</th><th class="num">Capital</th><th class="num">Juros e encargos</th><th class="num">Prestação</th><th>Vencimento</th><th>Estado</th></tr></thead><tbody>${rows}</tbody></table></div>` : '<p class="empty">Ainda não há dívidas registadas.</p>'}
         </section>` + phaseCard(4, ['Adicionar, editar e apagar dívidas (credor, capital, juros, encargos, prestação, datas, processo judicial, penhora)', 'Associar documentos a cada dívida', 'Gráficos: dívida total, por credor, evolução, prestações, vencidas, por tipo de crédito'], 'Os dados ficam guardados no servidor e só tu os vês.');
     },
-    analisar: () => phaseCard(3, ['Carregar PDF, JPG, PNG ou tirar fotografia com o telemóvel', 'Aviso prévio sobre o envio do documento ao Google Gemini e consentimento expresso', 'Relatório A–L: entidade, valor reclamado, datas, prazo, referências legais expressas, explicação simples, questões a confirmar', 'Prioridade: Informativo, Atenção ou Urgente', 'Separação entre factos do documento, interpretações possíveis e o que não foi possível confirmar'], 'A chave do Gemini fica apenas no servidor. Nunca no navegador.'),
+    async analisar() {
+      if (api.isDemo()) {
+        return `<div class="notice">Na demonstração não é enviado nenhum documento. Este é um exemplo fictício do relatório que recebes.</div>` + report.render(report.sample);
+      }
+      const u = api.currentUser();
+      if (!u.consent_ai_at) {
+        return `<section class="panel"><h2>Antes de começar</h2>
+          <p>Para analisar um documento, o ficheiro é enviado ao <strong>Google Gemini</strong> (Google LLC), um serviço de inteligência artificial, em regime pago que não usa os teus documentos para treinar modelos.</p>
+          <p>O documento fica guardado num espaço privado só teu e é apagado automaticamente ao fim do prazo de conservação. Podes apagá-lo antes, quando quiseres.</p>
+          <p class="fine">A análise é automática e informativa. Não é aconselhamento jurídico e pode ter erros.</p>
+          <label class="check"><input type="checkbox" id="ai-ok"><span>Autorizo o envio dos documentos que eu escolher para análise pelo Google Gemini.</span></label>
+          <button class="btn btn-primary" data-action="give-ai-consent">Continuar</button></section>`;
+      }
+      const [debts, list] = await Promise.all([api.debtsLite(), api.analyses()]);
+      return `<section class="panel"><h2>Novo documento</h2>
+          <p>Fotografa a carta com boa luz e de frente, ou carrega o PDF. Uma página de cada vez funciona melhor nas fotografias.</p>
+          <form id="f-doc" novalidate>
+            <div class="upload-box">
+              <label class="btn btn-primary btn-lg" for="doc-cam">📷 Tirar fotografia</label>
+              <input id="doc-cam" type="file" accept="image/*" capture="environment">
+              <label class="btn btn-secondary btn-lg" for="doc-file">📎 Escolher ficheiro</label>
+              <input id="doc-file" type="file" accept="application/pdf,image/jpeg,image/png">
+            </div>
+            <div id="doc-chosen" class="file-chosen"></div>
+            ${debts.length ? `<div class="field"><label for="doc-debt">Associar a uma dívida <span class="fine">(opcional)</span></label><select id="doc-debt"><option value="">— Nenhuma —</option>${debts.map(d => `<option value="${d.id}">${util.esc(d.creditor)}</option>`).join('')}</select></div>` : ''}
+            <div class="notice">Ao carregar em “Analisar”, o documento é guardado no teu espaço privado e enviado ao Google Gemini para leitura automática.</div>
+            <button class="btn btn-primary btn-lg" type="submit" id="doc-go" disabled>Analisar documento</button>
+          </form>
+          <div id="doc-progress"></div>
+        </section>
+        <div id="doc-result"></div>
+        <section class="panel"><h2>Análises anteriores</h2>
+          ${list.length ? `<div class="table-scroll"><table><thead><tr><th>Data</th><th>Documento</th><th>Prioridade</th><th></th></tr></thead><tbody>
+            ${list.map(a => `<tr><td>${util.fmtDateTime(a.created_at)}</td><td>${util.esc((a.dc_documents && a.dc_documents.name) || a.result.tipo_documento || '—')}</td><td>${report.badge(a.priority)}</td>
+              <td><div class="row-actions"><button class="btn btn-ghost btn-sm" data-action="view-analysis" data-id="${a.id}">Ver</button>${a.document_id ? `<button class="btn btn-ghost btn-sm" data-action="delete-doc" data-id="${a.document_id}">Apagar documento</button>` : ''}</div></td></tr>`).join('')}
+          </tbody></table></div>` : '<p class="empty">Ainda não analisaste nenhum documento.</p>'}
+        </section>`;
+    },
     simulador: () => phaseCard(4, ['Rendimentos: salário líquido e outros', 'Despesas: renda, alimentação, água, luz, gás, telecomunicações, transportes, saúde, família, prestações, outras', 'Cálculo de rendimento total, despesas essenciais, encargos financeiros, saldo, taxa de esforço e capacidade de pagamento', 'Três cenários: atual, redução de despesas e reorganização de pagamentos', 'Gráficos e tabelas'], 'O simulador nunca sugere pagamentos que deixem as despesas essenciais por cobrir.'),
     insolvencia: () => phaseCard(5, ['O que é a insolvência de pessoa singular e quando pode ser ponderada', 'Consequências, exoneração do passivo restante e plano de pagamentos', 'Responsabilidades do devedor e documentação habitual', 'Diferença entre insolvência e processo executivo', 'Questionário de organização com relatório preliminar'], 'Conteúdo a redigir a partir do texto em vigor do CIRE no Diário da República, com data de atualização. A decisão de avançar deve ser sempre acompanhada por profissional habilitado.'),
     apoio: () => phaseCard(5, ['Pedido de contacto com advogado, solicitador, contabilista certificado ou entidade de apoio ao sobre-endividamento', 'Autorização expressa e revogável para partilhar documentos com o profissional escolhido', 'Distinção clara entre informação automática e serviço prestado por profissional'], 'Os dados nunca são vendidos. Parcerias remuneradas, se existirem, serão identificadas.'),
@@ -308,7 +414,7 @@
       const u = api.currentUser();
       if (api.isDemo()) return `<section class="panel"><h2>Conta de demonstração</h2><p>Na demonstração não há conta real. Cria uma conta gratuita para guardares os teus dados.</p><button class="btn btn-primary" data-action="open-register">Criar conta</button></section>`;
       const hist = await api.history(30);
-      const opLabel = { registo: 'Registo', login: 'Entrada', logout: 'Saída', 'perfil.alterado': 'Dados pessoais alterados', 'consentimento_ia.dado': 'Consentimento IA dado', 'consentimento_ia.retirado': 'Consentimento IA retirado', 'palavra_passe.alterada': 'Palavra-passe alterada', exportacao: 'Exportação de dados' };
+      const opLabel = { registo: 'Registo', login: 'Entrada', logout: 'Saída', 'perfil.alterado': 'Dados pessoais alterados', 'consentimento_ia.dado': 'Consentimento IA dado', 'consentimento_ia.retirado': 'Consentimento IA retirado', 'palavra_passe.alterada': 'Palavra-passe alterada', exportacao: 'Exportação de dados', analise_ia: 'Análise de documento', 'dc_documents.insert': 'Documento carregado', 'dc_documents.delete': 'Documento apagado', 'dc_debts.insert': 'Dívida adicionada', 'dc_debts.update': 'Dívida alterada', 'dc_debts.delete': 'Dívida apagada' };
       const planName = { gratuito: 'Gratuito', individual: 'Individual', empresarial: 'Empresarial' }[u.plan] || u.plan;
       return `<section class="panel"><h2>Dados pessoais</h2>
           <form id="f-profile" class="form" novalidate>
@@ -338,6 +444,38 @@
   };
 
   const bindView = {
+    async analisar() {
+      const f = $('#f-doc'); if (!f) return;
+      try { lastAnalyses = await api.analyses(); } catch (e) { lastAnalyses = []; }
+      let chosen = null;
+      const pick = ev => {
+        const file = ev.target.files && ev.target.files[0]; if (!file) return;
+        if (!/^(application\/pdf|image\/)/.test(file.type)) { ui.toast('Formato não suportado. Usa PDF, JPG ou PNG.', 'err'); return; }
+        chosen = file; $('#doc-chosen').textContent = '✔ ' + (file.name || 'fotografia'); $('#doc-go').disabled = false;
+      };
+      $('#doc-cam').addEventListener('change', pick); $('#doc-file').addEventListener('change', pick);
+      f.addEventListener('submit', async ev => {
+        ev.preventDefault(); if (!chosen) return;
+        const btn = $('#doc-go'), prog = $('#doc-progress');
+        ui.busy(btn, true, 'A analisar…');
+        const step = t => { prog.innerHTML = `<div class="progress"><div class="spinner"></div><div>${t}</div></div>`; };
+        try {
+          step('A preparar o documento…');
+          const file = await shrinkImage(chosen);
+          if (!['application/pdf', 'image/jpeg', 'image/png'].includes(file.type)) throw new Error('Formato não suportado. Usa PDF, JPG ou PNG.');
+          step('A guardar no teu espaço privado…');
+          const doc = await api.uploadDocument(file, $('#doc-debt') ? $('#doc-debt').value : '');
+          step('A ler o documento com inteligência artificial. Pode demorar até um minuto…');
+          const an = await api.analyse(doc.id);
+          prog.innerHTML = '';
+          $('#doc-result').innerHTML = report.render(an.result, `${doc.name} · ${util.fmtDateTime(an.created_at)}`);
+          $('#doc-result').scrollIntoView({ behavior: 'smooth' });
+          chosen = null; f.reset(); $('#doc-chosen').textContent = '';
+        } catch (e) {
+          prog.innerHTML = `<div class="alert urg">${util.esc(e.message || 'Erro.')}</div>`;
+        } finally { ui.busy(btn, false); $('#doc-go').disabled = !chosen; }
+      });
+    },
     conta() {
       const f = $('#f-profile'); if (!f) return;
       f.addEventListener('submit', async ev => {
@@ -416,6 +554,25 @@
     'open-reset'() { auth.resetForm(); },
     'close-modal'() { ui.closeModal(); },
     'change-password'() { auth.newPasswordForm('Alterar palavra-passe'); },
+    async 'give-ai-consent'(btn) {
+      if (!$('#ai-ok').checked) return ui.toast('Marca a autorização para continuar.', 'err');
+      ui.busy(btn, true, 'A guardar…');
+      try { await api.setAIConsent(true); route(); } catch (e) { ui.error(e); ui.busy(btn, false); }
+    },
+    'view-analysis'(btn) {
+      const a = lastAnalyses.find(x => x.id === btn.dataset.id); if (!a) return;
+      $('#doc-result').innerHTML = report.render(a.result, `${(a.dc_documents && a.dc_documents.name) || ''} · ${util.fmtDateTime(a.created_at)}`);
+      $('#doc-result').scrollIntoView({ behavior: 'smooth' });
+    },
+    'delete-doc'(btn) {
+      ui.openModal(`<h2 id="modal-title">Apagar documento</h2><p>O ficheiro e a respetiva análise são apagados definitivamente.</p>
+        <button class="btn btn-primary btn-block" style="background:var(--urg)" data-action="confirm-delete-doc" data-id="${util.esc(btn.dataset.id)}">Apagar</button>`);
+    },
+    async 'confirm-delete-doc'(btn) {
+      ui.busy(btn, true, 'A apagar…');
+      try { await api.deleteDocument(btn.dataset.id); ui.closeModal(); ui.toast('Documento apagado.', 'ok'); route(); }
+      catch (e) { ui.error(e); ui.busy(btn, false); }
+    },
     'goto-analyse'() {
       if (api.currentUser()) location.hash = '#/app/analisar';
       else auth.registerForm('Para analisar um documento precisas de uma conta. O plano gratuito inclui uma análise de demonstração.');

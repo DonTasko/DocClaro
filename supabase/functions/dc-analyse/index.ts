@@ -1,5 +1,5 @@
 // DívidaClara — análise documental com Gemini.
-// A chave GEMINI_API_KEY fica só aqui (secret do Supabase). O browser nunca a vê.
+// A chave DC_GEMINI_API_KEY fica só aqui (secret do Supabase). O browser nunca a vê.
 // Fluxo: autentica o utilizador → valida conta, consentimento IA e limite do plano →
 // lê o documento do Storage privado → Gemini com saída JSON estruturada → guarda em dc_ai_analyses.
 import { createClient } from "jsr:@supabase/supabase-js@2";
@@ -106,7 +106,7 @@ Deno.serve(async (req) => {
   // Diagnóstico sem dados sensíveis: só diz se a chave existe e que modelo está configurado.
   if (body?.action === "health") {
     const { data: m } = await admin.from("dc_settings").select("value").eq("key", "gemini_model").maybeSingle();
-    return reply(req, { ok: true, gemini_key: !!Deno.env.get("GEMINI_API_KEY"), model: (m?.value as string) || DEFAULT_MODEL });
+    return reply(req, { ok: true, gemini_key: !!Deno.env.get("DC_GEMINI_API_KEY"), model: (m?.value as string) || DEFAULT_MODEL });
   }
   if (body?.action !== "analyse" || typeof body.document_id !== "string") return fail(req, "BAD_REQUEST", "Pedido inválido.");
 
@@ -143,8 +143,8 @@ Deno.serve(async (req) => {
   const setStatus = (s: string) => admin.from("dc_documents").update({ analysis_status: s }).eq("id", doc.id);
 
   try {
-    const key = Deno.env.get("GEMINI_API_KEY");
-    if (!key) throw Object.assign(new Error("GEMINI_API_KEY em falta"), { code: "CONFIG" });
+    const key = Deno.env.get("DC_GEMINI_API_KEY");
+    if (!key) throw Object.assign(new Error("DC_GEMINI_API_KEY em falta"), { code: "CONFIG" });
     const { data: blob, error: dErr } = await admin.storage.from(BUCKET).download(doc.storage_path);
     if (dErr || !blob) throw new Error("download: " + dErr?.message);
     const bytes = new Uint8Array(await blob.arrayBuffer());

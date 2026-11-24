@@ -11,7 +11,7 @@ Versão antiga do DocClaro: ramo `docclaro-antigo`.
 
 ## IA (Fase 3)
 - Código: supabase/functions/dc-analyse/index.ts (publicada no projeto MasterTable, verify_jwt off porque valida o utilizador por dentro).
-- Chave: secret `GEMINI_API_KEY` nas Edge Functions do Supabase. Nunca no frontend.
+- Chave: secret `DC_GEMINI_API_KEY` nas Edge Functions do Supabase. Nunca no frontend.
 - Modelo: dc_settings.gemini_model (vazio = gemini-3.5-flash). Trocar quando a Google anunciar desativação.
 - Limites: dc_settings.ai_limits (gratuito = total de sempre; restantes = por mês). Contagem feita em dc_logs.
 - Diagnóstico: POST {"action":"health"} à função devolve se a chave existe (sem a revelar).

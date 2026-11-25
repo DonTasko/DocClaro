@@ -8,7 +8,7 @@
 window.DC_CONFIG = {
   APP_NAME: 'DívidaClara',
   SLOGAN: 'Compreender. Organizar. Resolver.',
-  VERSION: '0.4.0 · Fase 4',
+  VERSION: '0.4.1 · Fase 4',
 
   BACKEND: {
     TYPE: 'supabase',
@@ -30,6 +30,17 @@ window.DC_CONFIG = {
     { id: 'analise', name: 'Análise avulsa', price: 9.99, period: '/análise', features: ['Uma análise documental adicional', 'Relatório organizado A–L', 'Sem subscrição'] },
     { id: 'empresarial', name: 'Empresarial', price: 19.90, period: '/mês', from: true, features: ['Gestão financeira da empresa', 'Documentos e análises IA', 'Indicadores de tesouraria', 'Relatórios'] }
   ],
+
+  // Números oficiais (recurso). Os valores reais vêm de dc_settings.public_stats.
+  STATS: {
+    updated: '2026-11-25',
+    items: [
+      { value: '6 368', label: 'pessoas foram declaradas insolventes em Portugal em 2025', source: 'DGPJ — Estatísticas da Justiça', period: '2025', url: 'https://estatisticas.justica.gov.pt/' },
+      { value: '3 em cada 4', label: 'insolvências decretadas em 2025 foram de particulares, não de empresas', source: 'DGPJ — Estatísticas da Justiça', period: '2025 (6 368 de 8 384)', url: 'https://estatisticas.justica.gov.pt/' },
+      { value: '7 846', label: 'processos por mês abertos pelos bancos para clientes com prestações em atraso (PERSI)', source: 'Banco de Portugal — Relatório de Acompanhamento dos Mercados de Crédito', period: 'média mensal de 2025', url: 'https://www.bportugal.pt/publicacao/relatorio-de-acompanhamento-dos-mercados-de-credito-2025' },
+      { value: '36 meses', label: 'foi a duração média de uma execução cível (cobrança judicial de dívidas)', source: 'DGPJ — Estatísticas da Justiça', period: '2025', url: 'https://estatisticas.justica.gov.pt/' }
+    ]
+  },
 
   // Mostra a ligação "Ver demonstração" (dados fictícios, nada é gravado).
   DEMO_MODE: true

@@ -250,3 +250,17 @@ td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .sim-table tbody th{text-transform:none;letter-spacing:0;font-size:.92rem;color:var(--ink);font-weight:500;white-space:normal}
 .neg-txt{color:var(--urg)}
 .modal-box{max-width:560px}
+
+/* Em números */
+.numbers{background:var(--navy);color:#fff}
+.numbers h2{color:#fff}
+.numbers .section-lead{color:var(--light)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin:1.8rem 0 1rem}
+.stat{margin:0;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:var(--r);padding:1.3rem 1.2rem;display:flex;flex-direction:column;gap:.6rem}
+.stat-val{font-size:2.1rem;font-weight:800;letter-spacing:-.02em;color:#fff;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat-label{display:block;color:#E8F0F7;font-size:.98rem}
+.stat-src{display:block;margin-top:.6rem;font-size:.78rem;color:var(--light)}
+.stat-src a{color:var(--light)}
+.numbers .fine{color:var(--light)}
+@media (max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.stats{grid-template-columns:1fr}.stat-val{font-size:1.9rem}}

@@ -71,3 +71,9 @@ insert into public.dc_admins (user_id) select id from auth.users where email = '
 - Política de privacidade e termos são rascunhos: revisão por jurista.
 - Preencher CONTACT.ENTITY em config.js.
 - Pôr DEMO_MODE: false se não quiseres a demonstração visível.
+
+## Secção "Em números" (página inicial)
+- Dados em dc_settings.public_stats (público). Recurso local em config.js → STATS.
+- Só fontes oficiais: DGPJ (estatisticas.justica.gov.pt → Insolvências decretadas, filtro "Pessoa singular"; tema Justiça económica) e Banco de Portugal (Relatório de Acompanhamento dos Mercados de Crédito).
+- Recolhido a 25/11/2026: 2025 insolvências decretadas 8 384 (singulares 6 368); PERSI 7 846/mês (2025); execução cível 36 meses (2025).
+- Atualizar a cada trimestre (DGPJ publica ~40 dias após o fecho; 4.º T 2026 deve sair em fevereiro de 2027).

@@ -206,6 +206,10 @@
     async contact({ name, email, message }) {
       must(await sb.from('dc_contact_messages').insert({ name, email, message, consent: true }));
     },
+    async publicStats() {
+      const data = must(await sb.from('dc_settings').select('value').eq('key', 'public_stats').maybeSingle());
+      return data ? data.value : null;
+    },
     async publicPlans() {
       const data = must(await sb.from('dc_settings').select('value').eq('key', 'plans').maybeSingle());
       return data ? data.value : null;

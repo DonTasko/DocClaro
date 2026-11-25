@@ -93,6 +93,15 @@
           <button class="btn ${p.highlight ? 'btn-primary' : 'btn-ghost'} btn-block" data-action="choose-plan" data-plan="${util.esc(p.id)}">${Number(p.price) === 0 ? 'Começar gratuitamente' : 'Escolher'}</button>
         </div>`).join('');
     },
+    renderStats(st) {
+      if (!st || !Array.isArray(st.items)) return;
+      $('#stats').innerHTML = st.items.map(i => `<figure class="stat">
+          <div class="stat-val">${util.esc(i.value)}</div>
+          <figcaption><span class="stat-label">${util.esc(i.label)}</span>
+          <span class="stat-src">Fonte: ${i.url ? `<a href="${util.esc(i.url)}" target="_blank" rel="noopener">${util.esc(i.source)}</a>` : util.esc(i.source)} · ${util.esc(i.period)}</span></figcaption>
+        </figure>`).join('');
+      $('#stats-updated').textContent = st.updated ? 'Dados recolhidos em ' + util.fmtDate(st.updated) + '. Os números são atualizados quando as entidades publicam novos dados.' : '';
+    },
     renderContact() {
       const c = cfg.CONTACT, lines = [];
       if (c.EMAIL) lines.push(`Email: <a href="mailto:${util.esc(c.EMAIL)}">${util.esc(c.EMAIL)}</a>`);
@@ -102,11 +111,15 @@
     },
     async init() {
       pub.renderPlans(cfg.PLANS);
+      pub.renderStats(cfg.STATS);
       pub.renderContact();
       $('#footer-version').textContent = `© ${new Date().getFullYear()} DívidaClara · versão ${cfg.VERSION}`;
       $('#demo-link').hidden = !cfg.DEMO_MODE;
       $('#contact-form').addEventListener('submit', pub.onContact);
-      if (api.isConfigured()) { try { const p = await api.publicPlans(); if (Array.isArray(p) && p.length) pub.renderPlans(p); } catch (e) { /* mantém preços locais */ } }
+      if (api.isConfigured()) {
+        try { const p = await api.publicPlans(); if (Array.isArray(p) && p.length) pub.renderPlans(p); } catch (e) { /* mantém preços locais */ }
+        try { const st = await api.publicStats(); if (st) pub.renderStats(st); } catch (e) { /* mantém números locais */ }
+      }
     },
     async onContact(ev) {
       ev.preventDefault();

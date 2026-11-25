@@ -28,7 +28,7 @@ window.DC_CONFIG = {
     { id: 'gratuito', name: 'Gratuito', price: 0, period: '', features: ['Registo e área pessoal', 'Introdução manual de dívidas', 'Dashboard básico', 'Informação educativa', '1 análise documental de demonstração'] },
     { id: 'individual', name: 'Individual', price: 7.99, period: '/mês', highlight: true, features: ['20 análises de documentos com IA por mês', 'Gestão de dívidas', 'Simulador financeiro', 'Histórico e relatórios PDF', 'Alertas e notificações'] },
     { id: 'analise', name: 'Análise avulsa', price: 2.99, period: '/análise', features: ['Uma análise de documento', 'Relatório organizado A–L', 'Pagamento único, sem subscrição'] },
-    { id: 'empresarial', name: 'Empresarial', price: 19.90, period: '/mês', from: true, features: ['Gestão financeira da empresa', 'Documentos e análises IA', 'Indicadores de tesouraria', 'Relatórios'] }
+    { id: 'empresarial', name: 'Empresarial', price: 19.90, period: '/mês', from: true, features: ['Gestão financeira da empresa', '60 análises de documentos com IA por mês', 'Indicadores de tesouraria', 'Relatórios'] }
   ],
 
   // Números oficiais (recurso). Os valores reais vêm de dc_settings.public_stats.

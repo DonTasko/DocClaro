@@ -26,8 +26,8 @@ window.DC_CONFIG = {
   // Preços de recurso. Os preços reais vêm da tabela dc_settings (chave "plans").
   PLANS: [
     { id: 'gratuito', name: 'Gratuito', price: 0, period: '', features: ['Registo e área pessoal', 'Introdução manual de dívidas', 'Dashboard básico', 'Informação educativa', '1 análise documental de demonstração'] },
-    { id: 'individual', name: 'Individual', price: 7.99, period: '/mês', highlight: true, features: ['Análises de documentos com IA (limite mensal)', 'Gestão de dívidas', 'Simulador financeiro', 'Histórico e relatórios PDF', 'Alertas e notificações'] },
-    { id: 'analise', name: 'Análise avulsa', price: 9.99, period: '/análise', features: ['Uma análise documental adicional', 'Relatório organizado A–L', 'Sem subscrição'] },
+    { id: 'individual', name: 'Individual', price: 7.99, period: '/mês', highlight: true, features: ['20 análises de documentos com IA por mês', 'Gestão de dívidas', 'Simulador financeiro', 'Histórico e relatórios PDF', 'Alertas e notificações'] },
+    { id: 'analise', name: 'Análise avulsa', price: 2.99, period: '/análise', features: ['Uma análise de documento', 'Relatório organizado A–L', 'Pagamento único, sem subscrição'] },
     { id: 'empresarial', name: 'Empresarial', price: 19.90, period: '/mês', from: true, features: ['Gestão financeira da empresa', 'Documentos e análises IA', 'Indicadores de tesouraria', 'Relatórios'] }
   ],
 

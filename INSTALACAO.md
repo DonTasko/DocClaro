@@ -20,7 +20,7 @@ Versão antiga do DocClaro: ramo `docclaro-antigo`.
 - Código: supabase/functions/dc-analyse/index.ts (publicada no projeto MasterTable, verify_jwt off porque valida o utilizador por dentro).
 - Chave: secret `DC_GEMINI_API_KEY` nas Edge Functions do Supabase. Nunca no frontend.
 - Modelo: dc_settings.gemini_model (vazio = gemini-3.5-flash). Trocar quando a Google anunciar desativação.
-- Limites: dc_settings.ai_limits (gratuito = total de sempre; restantes = por mês). Contagem feita em dc_logs.
+- Limites: dc_settings.ai_limits (gratuito 1 no total; individual 20/mês; empresarial 30/mês). Análise avulsa 2,99 €. Contagem feita em dc_logs.
 - Diagnóstico: POST {"action":"health"} à função devolve se a chave existe (sem a revelar).
 - Por fazer: eliminação automática dos documentos após doc_retention_days (agendar com pg_cron).
 

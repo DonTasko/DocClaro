@@ -478,7 +478,8 @@
       if (inc && effort > 35) alerts.push(`<div class="alert warn">📊 <div>As prestações absorvem ${util.num.format(effort)} % do rendimento. Acima de 35 % a situação merece atenção.</div></div>`);
       if (inc && bal < 0) alerts.push(`<div class="alert urg">💶 <div>As despesas e prestações são superiores ao rendimento em ${util.fmtEUR(-bal)} por mês.</div></div>`);
       const empty = !d.debts.length && !d.ie.length;
-      return `${empty ? `<section class="panel"><h2>Olá, ${util.esc(u.name)}</h2><p>Ainda não registaste dívidas, rendimentos ou despesas. O registo manual chega na Fase 4; por agora podes rever a tua conta e os consentimentos.</p><a class="btn btn-secondary" href="#/app/conta">A minha conta</a></section>` : ''}
+      return `${empty ? `<section class="panel"><h2>Olá, ${util.esc(u.name)}</h2><p>Começa por registar as tuas dívidas e os teus rendimentos e despesas. Com isso, este painel mostra o total em dívida, o saldo do mês e os alertas.</p>
+          <div class="row-actions"><a class="btn btn-primary" href="#/app/dividas">Registar dívidas</a><a class="btn btn-secondary" href="#/app/simulador">Indicar rendimentos e despesas</a></div></section>` : ''}
         <div class="kpis">
           ${kpi('Total de dívidas', util.fmtEUR(totDebt))}${kpi('Credores', creditors)}${kpi('Prestações mensais', util.fmtEUR(monthly))}
           ${kpi('Rendimentos mensais', util.fmtEUR(inc))}${kpi('Despesas mensais', util.fmtEUR(exp))}
